@@ -48,3 +48,7 @@ The default party calibration is an experienced mountaineer and skier with glaci
 Season windows and permit entries in `regions.yaml` carry a `verify_by` date; the resolver warns past it and never refuses. A source an agent logged as ad hoc on a trip earns a row in `sources.yaml` after the trip.
 
 Scripts cache station lists and avalanche polygons under `~/.cache/pnw-outdoor-planner/`.
+
+## License
+
+MIT. Keep the copyright line if you redistribute it.
