@@ -1,0 +1,1649 @@
+# Land-unit registry for pnw-outdoor-planner. Merged 2026-10-20 from the WA/NPS and OR/ID/BC halves.
+# A point may sit in several boxes (a wilderness inside its forest, a statewide program over everything); the resolver lists the smallest first.
+# Every 'verify_by' is a date before which that season or permit entry must be re-checked; the resolver warns past it and never refuses.
+# Page URLs were checked with HEAD on 2026-10-20; recreation.gov answers HEAD with 405 and GET with 200, so those were checked by GET.
+verified:
+  watchduty_center:
+    status: confirmed_from_app_bundle
+    form: https://app.watchduty.org/@{lat},{lng},{zoom}
+    example: https://app.watchduty.org/@47.6,-121.5,9
+    variant_without_zoom: https://app.watchduty.org/@{lat},{lng}
+    confirmed_how: Fetched https://app.watchduty.org/ and its Vite bundle (assets/index-*.js). The client route table contains the patterns /@:lat,:lng,:zoom and /@:lat,:lng, plus /@:lat,:lng,:zoom/pin and /@:lat,:lng/pin. Query parameters lat, lng, zoom were searched for and are not read for the map view; the only map-related query keys are mapMode, search, searchType, ownership, urgency, metadata. The static host returns HTTP 200 for the /@ path (it serves the single-page app for any path), so the HTTP check alone proves nothing; the route table is the evidence.
+    not_confirmed: No browser was available, so the rendered map position was not observed. Zoom is assumed to be a Mapbox zoom level (0 to 22). Ask for a human spot check once.
+    tried_and_absent: '?lat=&lng=&zoom= query form and #zoom/lat/lng hash form: no handler found in the bundle (the Mapbox GL Hash class ships in the bundle but no map instance enables it).'
+  arcgis_experience_center:
+    status: documented_form_confirmed_against_app_config_not_rendered
+    form: https://experience.arcgis.com/experience/3d9f1901932d4b089f01be06885f3e22/page/Welcome#widget_142=center:{lon}%2C{lat}%2C4326
+    scale_or_level: append ,scale:{scaleValue} or ,level:{zoomLevel} after the center value, comma separated, per the Esri Experience Builder URL parameters documentation
+    example: https://experience.arcgis.com/experience/3d9f1901932d4b089f01be06885f3e22/page/Welcome#widget_142=center:-121.5%2C47.9%2C4326%2Clevel:9
+    confirmed_how: 'Esri documents the hash form #<mapWidgetID>=center:<x,y,wkid> for Experience Builder 1.x (commas inside the value must be percent-encoded as %2C). The app config (arcgis.com/sharing/rest/content/items/3d9f1901932d4b089f01be06885f3e22/data) reports exbVersion 1.19.0 and gives the map widget id per page: Welcome = widget_142 (forest-wide), Mt. Baker Hwy = widget_152, Baker Lake Rd = widget_160, North Cascades Hwy = widget_165, Suiattle River Rd = widget_170, Mountain Loop Hwy = widget_175, US Hwy 2 = widget_180, I-90 = widget_185, Mather Memorial Pkwy = widget_190, Carbon River Hwy = widget_195. The Road and Trail List page has no map. The query-string form ?center=lon,lat&level=N is an ArcGIS Instant Apps convention and is not part of Experience Builder.'
+    not_confirmed: No browser was available, so the rendered recentering was not observed. WKID 4326 (lon,lat) is accepted by Esri's Point model but the docs example uses 102100 (Web Mercator meters); if 4326 fails, convert to 102100. The Experience's isUseCustomMapState is false, so initial extent comes from each web map and the hash overrides it.
+    corridor_pages: Corridor page slugs were not verified; address the forest-wide map through the Welcome page plus the hash, or name the corridor tab in the report.
+units:
+- id: mora_np
+  name: Mount Rainier National Park
+  kind: national_park
+  manager: NPS
+  jurisdiction: WA
+  bbox:
+  - -122.1
+  - 46.7
+  - -121.4
+  - 47.05
+  pages:
+    alerts: https://www.nps.gov/mora/planyourvisit/conditions.htm
+    conditions: https://www.nps.gov/mora/planyourvisit/trails-and-backcountry-camp-conditions.htm
+    roads: https://www.nps.gov/mora/planyourvisit/road-status.htm
+    permits: https://www.nps.gov/mora/planyourvisit/wilderness-camping-and-hiking.htm
+  permits:
+  - name: Mount Rainier wilderness and climbing permits
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4675317
+    walkup: 'Wilderness permits: first-come walk-up at Longmire and White River Wilderness Information Centers, and Paradise Guide House for climbing, generally late May through early September; Carbon River ranger station by season. Winter climbing is self-registration after paying the per-person fee on Pay.gov. Reservation quota season is summer; permit requirement is year-round for overnight stays and for glaciers or above about 10,000 ft.'
+    verify_by: 2027-03-01
+  seasons:
+  - name: Timed entry (Paradise corridor and Sunrise)
+    kind: timed_entry
+    window:
+      start: 07-01
+      end: 09-30
+    note: Pilot ran 2024 and 2025 (2025 Sunrise only). Recreation.gov states no timed entry for any part of the park in 2026. Re-verify before 2027; window is a placeholder for the last pilot.
+    verify_by: 2027-03-01
+  - name: Sunrise road
+    kind: road
+    window:
+      start: 07-01
+      end: 10-15
+    note: Typical; varies. Opens when snow clears, usually early July, and closes with the first heavy snow. Sunrise road was closed to vehicles for the 2026 season at last check.
+    verify_by: 2027-05-15
+  - name: SR 410 Chinook Pass and SR 123 Cayuse Pass (park east side)
+    kind: road
+    window:
+      start: 05-25
+      end: 11-15
+    note: Typical; varies. WSDOT announces open and close yearly. Closed passes cut Sunrise, White River, and Ohanapecosh off from the east.
+    verify_by: 2027-04-15
+  - name: Paradise road winter night gate
+    kind: gate
+    window:
+      start: 10-20
+      end: 05-20
+    note: Nisqually entrance to Paradise is open in winter weather permitting; the road gate closes nightly from about late October and chains are required. Wraps the year end; varies.
+    verify_by: 2027-09-30
+  - name: Carbon River Road and Mowich Lake access
+    kind: road
+    window:
+      start: 07-01
+      end: 10-15
+    note: Carbon River Road is closed to vehicles past the entrance; Mowich Lake Road access from SR 165 was cut off by a closed bridge (WSDOT 2025 release). Check the road status page.
+    verify_by: 2027-05-15
+  webcams:
+  - name: Mount Rainier NPS webcams
+    url: https://www.nps.gov/mora/learn/photosmultimedia/webcams.htm
+  notes: 'Gates and passes decide access: the east side depends on SR 410 and SR 123, Sunrise on its own seasonal road. Climbing needs a registration plus permit in every season; summer reservations sell out.'
+- id: noca_np
+  name: North Cascades National Park Service Complex (North Cascades NP, Ross Lake NRA, Lake Chelan NRA)
+  kind: national_park
+  manager: NPS
+  jurisdiction: WA
+  bbox:
+  - -121.6
+  - 48.2
+  - -120.4
+  - 49.0
+  pages:
+    alerts: https://www.nps.gov/noca/planyourvisit/conditions.htm
+    conditions: https://www.nps.gov/noca/planyourvisit/climbing-conditions.htm
+    roads: https://www.nps.gov/noca/planyourvisit/road-conditions.htm
+    closures: https://www.nps.gov/noca/planyourvisit/fire-closures.htm
+    permits: https://www.nps.gov/noca/planyourvisit/backcountry-reservations.htm
+  permits:
+  - name: North Cascades backcountry permit
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4675322
+    window:
+      start: 05-15
+      end: 09-30
+    walkup: A share of permits is held for walk-up at the Wilderness Information Center (Marblemount) and Golden West Visitor Center (Stehekin); lottery for early access, then general on-sale. Window is the approximate advance-reservation season.
+    verify_by: 2027-03-01
+  seasons:
+  - name: SR 20 North Cascades Highway
+    kind: road
+    window:
+      start: 04-15
+      end: 11-30
+    note: Typical; varies widely. NPS says snow and avalanche hazard close it late November or early December; it reopens April or early May. WSDOT announces yearly. Governs Ross Lake, Diablo, Easy Pass, Washington Pass, and the park east side.
+    verify_by: 2027-03-15
+  - name: Cascade River Road to Cascade Pass trailhead
+    kind: road
+    window:
+      start: 06-15
+      end: 10-31
+    note: Varies with snow clearing. Paved to about mile 10, then gravel; no RVs, trailers, or vehicles over 22 ft.
+    verify_by: 2027-05-15
+  webcams:
+  - name: North Cascades NPS webcams
+    url: https://www.nps.gov/subjects/air/webcams.htm?site=noca
+  - name: WSDOT North Cascades Highway
+    url: https://wsdot.com/travel/real-time/mountainpasses/north-cascades-highway
+  notes: SR 20 gates the whole north side and is the Access agent's first read. Stehekin has no road access; it is reached by ferry, floatplane, or hiking, and the Stehekin valley is a separate logistics case.
+- id: olym_np
+  name: Olympic National Park
+  kind: national_park
+  manager: NPS
+  jurisdiction: WA
+  bbox:
+  - -124.75
+  - 47.35
+  - -123.0
+  - 48.4
+  pages:
+    alerts: https://www.nps.gov/olym/planyourvisit/conditions.htm
+    conditions: https://www.nps.gov/olym/planyourvisit/wilderness-trail-conditions.htm
+    roads: https://www.nps.gov/olym/planyourvisit/current-road-conditions.htm
+    permits: https://www.nps.gov/olym/planyourvisit/wilderness-reservations.htm
+  permits:
+  - name: Olympic wilderness permit
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4098362
+    window:
+      start: 05-15
+      end: 10-15
+    walkup: In person at the Wilderness Information Center in Port Angeles for any remaining permits, phone (360) 565-3100. Paper self-registration at trailheads no longer exists. Quota areas include Sol Duc and Seven Lakes Basin, Grand Valley, Royal Lake, Cape Alava and Sand Point, and the East Fork Quinault and Enchanted Valley trial quota. Summer reservations release April 15 at 7:00 AM Pacific.
+    verify_by: 2027-04-01
+  seasons:
+  - name: Hurricane Ridge Road
+    kind: road
+    window:
+      start: 05-01
+      end: 10-31
+    note: Typical daily-open window; varies. Winter service is weather dependent and has been limited to weekends or closed; check the road page and call (360) 565-3131.
+    verify_by: 2027-04-15
+  - name: Deer Park and Obstruction Point roads
+    kind: road
+    window:
+      start: 06-09
+      end: 10-31
+    note: 'Typical; varies. 2026 openings: Deer Park June 9, Obstruction Point June 17. Both are gravel and not suitable for RVs or trailers.'
+    verify_by: 2027-05-15
+  webcams:
+  - name: Olympic NPS webcams
+    url: https://www.nps.gov/olym/learn/photosmultimedia/webcams.htm
+  notes: Ferry legs (Kingston, Bainbridge, Port Angeles) are a time input. The Wilderness Information Center is the only walk-up path and has fixed hours. The park is a ring of separate road systems; no road crosses the interior.
+- id: crla_np
+  name: Crater Lake National Park
+  kind: national_park
+  manager: NPS
+  jurisdiction: OR
+  bbox:
+  - -122.3
+  - 42.82
+  - -121.95
+  - 43.07
+  pages:
+    alerts: https://www.nps.gov/crla/planyourvisit/conditions.htm
+    conditions: https://www.nps.gov/crla/planyourvisit/conditions.htm
+    roads: https://www.nps.gov/crla/planyourvisit/hours.htm
+    permits: https://www.nps.gov/crla/planyourvisit/backcountry_camping.htm
+  permits:
+  - name: Crater Lake backcountry camping permit
+    system: self_issue
+    url: https://www.nps.gov/crla/planyourvisit/backcountry_camping.htm
+    walkup: Free, issued in person at the Steel Visitor Center or the Rim Visitor Center in season; required year-round for overnight trips, not for day hikes.
+    verify_by: 2027-05-01
+  seasons:
+  - name: Rim Drive
+    kind: road
+    window:
+      start: 07-01
+      end: 10-31
+    note: Typical; varies. NPS closes Rim Drive and the North Entrance Road to cars at the first big snowstorm or November 1, whichever comes first. Rim Drive sections reopen late June to mid July depending on snow. The park publishes closing dates since 2009 on the hours page.
+    verify_by: 2027-05-15
+  - name: North Entrance Road
+    kind: road
+    window:
+      start: 05-15
+      end: 10-31
+    note: Typical; varies. Same closing rule as Rim Drive; opens in spring as it is cleared, often May to June. The south entrance (OR 62 via Annie Spring) stays open all year.
+    verify_by: 2027-05-01
+  webcams:
+  - name: Crater Lake NPS webcams
+    url: https://www.nps.gov/crla/learn/photosmultimedia/webcams.htm
+  notes: Oregon unit, held here because it is NPS. Winter access is the south entrance only; ski and snowshoe on the closed Rim Drive.
+- id: mbs_nf
+  name: Mt. Baker-Snoqualmie National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -122.3
+  - 46.95
+  - -120.8
+  - 49.0
+  districts:
+  - Mt. Baker
+  - Darrington
+  - Skykomish
+  - Snoqualmie
+  pages:
+    alerts: https://www.fs.usda.gov/r06/mbs/alerts
+    conditions: https://www.fs.usda.gov/r06/mbs/conditions
+    roads: https://www.fs.usda.gov/r06/mbs/conditions
+    closures: https://www.fs.usda.gov/r06/mbs/alerts
+    permits: https://www.fs.usda.gov/r06/mbs/passes
+  map_url: https://experience.arcgis.com/experience/3d9f1901932d4b089f01be06885f3e22/page/Welcome
+  map_center: 'hash on the Welcome page: #widget_142=center:{lon}%2C{lat}%2C4326,level:{N}; see verified.arcgis_experience_center'
+  map_center_template: '{map_url}#widget_142=center:{lon}%2C{lat}%2C4326%2Clevel:{zoom}'
+  permits:
+  - name: Northwest Forest Pass or America the Beautiful pass
+    system: recreation.gov
+    url: https://www.recreation.gov/activitypass/AP24333
+    walkup: Sold at ranger stations and local vendors. The Discover Pass is not valid at USFS trailheads.
+    verify_by: 2027-01-15
+  seasons:
+  - name: SR 542 Mt. Baker Highway above Heather Meadows (Artist Point)
+    kind: road
+    window:
+      start: 07-10
+      end: 10-15
+    note: Typical; varies. WSDOT closes the upper highway in fall and clears it in early summer. A winter-prep closure alert was posted this fall.
+    verify_by: 2027-05-15
+  - name: Mountain Loop Highway upper 14 miles (Deer Creek gate to Bedal gate) and Mt. Pilchuck Road
+    kind: gate
+    window:
+      start: 05-26
+      end: 11-22
+    note: Typical; varies. The 2025-26 winter closure ran November 22, 2025 to May 26, 2026. Gates also affect Barlow Pass, Monte Cristo, and Pilchuck trailheads.
+    verify_by: 2027-05-01
+  webcams:
+  - name: WSDOT Stevens Pass
+    url: https://wsdot.com/travel/real-time/mountainpasses/stevens
+  - name: WSDOT Snoqualmie Pass
+    url: https://wsdot.com/travel/real-time/mountainpasses/snoqualmie
+  notes: 'The only WA forest with a published road and trail status map: one Experience with a forest-wide Welcome page map and corridor pages for Mt. Baker Hwy, Baker Lake Rd, North Cascades Hwy, Suiattle River Rd, Mountain Loop Hwy, US 2, I-90, Mather Memorial Pkwy, and Carbon River Hwy. Roads are often stale; carry the page date.'
+- id: okawen_nf
+  name: Okanogan-Wenatchee National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -121.65
+  - 46.6
+  - -118.95
+  - 49.0
+  districts:
+  - Methow Valley
+  - Chelan
+  - Entiat
+  - Wenatchee River
+  - Cle Elum
+  - Naches
+  pages:
+    alerts: https://www.fs.usda.gov/r06/okanogan-wenatchee/alerts
+    conditions: https://www.fs.usda.gov/r06/okanogan-wenatchee/conditions
+    roads: https://www.fs.usda.gov/r06/okanogan-wenatchee/alerts/current-road-condition-updates-and-closure-order-alerts
+    closures: https://experience.arcgis.com/experience/44658a89c53d4957a799a6a50dd341aa
+    permits: https://www.fs.usda.gov/r06/okanogan-wenatchee/permits
+  permits:
+  - name: Northwest Forest Pass or America the Beautiful pass
+    system: recreation.gov
+    url: https://www.fs.usda.gov/r06/okanogan-wenatchee/permits
+    walkup: Sold at ranger stations and local vendors.
+    verify_by: 2027-01-15
+  seasons:
+  - name: Harts Pass Road (FR 5400) to Slate Peak
+    kind: road
+    window:
+      start: 07-01
+      end: 10-31
+    note: Typical; varies. Snow keeps the upper road closed into early summer; a Harts Pass road restriction alert exists. Leads to Pacific Crest Trail and Pasayten access.
+    verify_by: 2027-05-15
+  webcams:
+  - name: WSDOT Blewett and Stevens passes
+    url: https://wsdot.com/travel/real-time/mountainpasses/stevens
+  notes: No forest-published road and trail status map. The closures page points to the Region 6 emergency closures Experience (all PNW forests, not forest-specific); the forest's own conditions page lists road status text and is often dated. Alpine Lakes and Glacier Peak wilderness permits are handled in their own units.
+- id: gpnf
+  name: Gifford Pinchot National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -122.4
+  - 45.7
+  - -121.0
+  - 46.7
+  districts:
+  - Cowlitz Valley
+  - Mt. Adams
+  - Mount St. Helens National Volcanic Monument
+  pages:
+    alerts: https://www.fs.usda.gov/r06/giffordpinchot/alerts
+    conditions: https://www.fs.usda.gov/r06/giffordpinchot/conditions
+    roads: https://www.fs.usda.gov/r06/giffordpinchot/alerts/road-repairs-road-closures-2026
+    closures: https://www.fs.usda.gov/r06/giffordpinchot/about-area/forest-orders
+    permits: https://www.fs.usda.gov/r06/giffordpinchot/permits
+  permits:
+  - name: Wilderness permit (Glacier View, Indian Heaven, Mt. Adams, Tatoosh, Trapper Creek, Goat Rocks, William O. Douglas)
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/giffordpinchot/alerts/wilderness-permit-requirements
+    walkup: Free, self-issued at trailheads, required on entry.
+    verify_by: 2027-05-01
+  seasons:
+  - name: Windy Ridge road (FR 99) and Spirit Lake Highway area
+    kind: road
+    window:
+      start: 05-25
+      end: 11-01
+    note: Typical; varies. Upper SR 504 beyond milepost 45.2 is closed by a large slide per a forest alert; the Johnston Ridge side is affected. Check the monument road alerts.
+    verify_by: 2027-04-15
+  webcams:
+  - name: WSDOT White Pass
+    url: https://wsdot.com/travel/real-time/mountainpasses/white
+  notes: 'No forest-published road status map found: the forest''s Interactive Maps page only links the national visitor map. Use alerts plus the Motor Vehicle Use Map for road legality. Forest order list is the closure authority.'
+- id: onf
+  name: Olympic National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -124.0
+  - 47.2
+  - -122.85
+  - 48.1
+  districts:
+  - Hood Canal
+  - Pacific
+  pages:
+    alerts: https://www.fs.usda.gov/r06/olympic/alerts
+    conditions: https://www.fs.usda.gov/r06/olympic/conditions
+    roads: https://www.fs.usda.gov/r06/olympic/conditions
+    closures: https://www.fs.usda.gov/r06/olympic/alerts
+    permits: https://www.fs.usda.gov/r06/olympic/permits
+  permits:
+  - name: Northwest Forest Pass or America the Beautiful pass
+    system: recreation.gov
+    url: https://www.fs.usda.gov/r06/olympic/permits
+    walkup: Sold at ranger stations and local vendors. Wilderness entries within the forest are covered by self-issue permits at trailheads where posted.
+    verify_by: 2027-01-15
+  seasons: []
+  notes: No forest-published road status map found; the conditions page says to call a district office for road conditions and points to the Motor Vehicle Use Map. Many roads close October 1 for wildlife (a forest alert is posted for 2026); the ring around the NPS interior means a point resolves to olym_np first.
+- id: colville_nf
+  name: Colville National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -119.6
+  - 48.05
+  - -117.03
+  - 49.0
+  districts:
+  - Newport
+  - Three Rivers
+  - Republic
+  - Tonasket
+  pages:
+    alerts: https://www.fs.usda.gov/r06/colville/alerts
+    closures: https://www.fs.usda.gov/r06/colville/alerts
+    permits: https://www.fs.usda.gov/r06/colville/permits
+  permits:
+  - name: Northwest Forest Pass or America the Beautiful pass
+    system: none
+    url: https://www.fs.usda.gov/r06/colville/permits
+    walkup: Most Colville trailheads need no pass; developed sites sell through ranger stations.
+    verify_by: 2027-01-15
+  seasons: []
+  notes: The forest has no conditions page (it returns 404); the alerts page carries closure orders and the prescribed fire interactive map is a burn tracker, not a road status map. Treat alerts as the single source.
+- id: alpine_lakes_wilderness
+  name: Alpine Lakes Wilderness (Enchantment Permit Area)
+  kind: wilderness
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -121.6
+  - 47.35
+  - -120.65
+  - 47.85
+  pages:
+    alerts: https://www.fs.usda.gov/r06/okanogan-wenatchee/alerts/alpine-lakes-wilderness-restrictions-forestwide-or-multi-district
+    conditions: https://www.fs.usda.gov/r06/okanogan-wenatchee/conditions
+    permits: https://www.fs.usda.gov/r06/okanogan-wenatchee/recreation/enchantments-overnight-permits
+  permits:
+  - name: Enchantment Permit Area overnight permit (advance lottery)
+    system: lottery
+    url: https://www.recreation.gov/permits/233273
+    window:
+      start: 05-15
+      end: 10-31
+    walkup: Daily lottery on recreation.gov May to October; winners pick up in person at the Wenatchee River Ranger Station the same day (check the FS page for current hours). Advance lottery is held about February 15 to March 1 with results about March 15.
+    verify_by: 2027-01-15
+  - name: Alpine Lakes day-use and non-Enchantment overnight (free self-issue)
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/okanogan-wenatchee/wilderness
+    walkup: Free permit at trailheads for most of the wilderness outside the Enchantment Permit Area; day use in the Enchantments also needs a free permit.
+    verify_by: 2027-05-01
+  seasons:
+  - name: Enchantment Permit Area quota season
+    kind: quota
+    window:
+      start: 05-15
+      end: 10-31
+    note: Typical; the forest page says the daily lottery runs May through October. Re-verify the exact days each year.
+    verify_by: 2027-01-15
+  webcams: []
+  notes: Spans MBS (west) and Okanogan-Wenatchee (east); the Enchantments core sits on the Okanogan-Wenatchee side. Resolve to this unit first, then read the okawen_nf alerts for road gates (Icicle Road, Eightmile). A missed lottery with a daily-lottery path is a Wait, not a stop.
+- id: glacier_peak_wilderness
+  name: Glacier Peak Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -121.45
+  - 48.0
+  - -120.75
+  - 48.45
+  pages:
+    alerts: https://www.fs.usda.gov/r06/mbs/alerts
+    conditions: https://www.fs.usda.gov/r06/mbs/conditions
+    permits: https://www.fs.usda.gov/r06/okanogan-wenatchee/wilderness
+  permits:
+  - name: Glacier Peak Wilderness free trailhead permit
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/okanogan-wenatchee/wilderness
+    walkup: Free, self-issued at the trailhead register; no quota.
+    verify_by: 2027-05-01
+  seasons: []
+  notes: Split between MBS (Darrington, Suiattle River Road side) and Okanogan-Wenatchee (Entiat, Chelan). Roads that wash out here (Suiattle River Road, White Chuck) are the usual access failure; read the MBS Experience for the Suiattle corridor.
+- id: pasayten_wilderness
+  name: Pasayten Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -120.95
+  - 48.55
+  - -119.7
+  - 49.0
+  pages:
+    alerts: https://www.fs.usda.gov/r06/okanogan-wenatchee/alerts
+    conditions: https://www.fs.usda.gov/r06/okanogan-wenatchee/conditions
+    permits: https://www.fs.usda.gov/r06/okanogan-wenatchee/wilderness
+  permits:
+  - name: Pasayten Wilderness trailhead permit
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/okanogan-wenatchee/wilderness
+    walkup: Self-issue at trailhead registers; current rules not confirmed on the forest wilderness page, call the Methow Valley district before a trip.
+    verify_by: 2027-05-01
+  seasons: []
+  notes: Access is by long forest roads (Harts Pass, Chewuch, Ross Lake via NOCA). Border crossing from Canada on the PCT needs a Canadian permit and is outside this registry.
+- id: goat_rocks_wilderness
+  name: Goat Rocks Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -121.6
+  - 46.33
+  - -121.25
+  - 46.62
+  pages:
+    alerts: https://www.fs.usda.gov/r06/giffordpinchot/alerts
+    conditions: https://www.fs.usda.gov/r06/giffordpinchot/conditions
+    permits: https://www.fs.usda.gov/r06/giffordpinchot/alerts/wilderness-permit-requirements
+  permits:
+  - name: Goat Rocks Wilderness permit
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/giffordpinchot/alerts/wilderness-permit-requirements
+    walkup: Free, self-issued at trailheads; the GPNF order lists Goat Rocks. No quota.
+    verify_by: 2027-05-01
+  seasons: []
+  notes: Straddles Gifford Pinchot (Cowlitz Valley) and Okanogan-Wenatchee (Naches). Some trailheads need a day-use pass. Snow lingers on the Knife Edge into July.
+- id: mt_adams_wilderness
+  name: Mount Adams Wilderness (Cascade Volcano Pass climbing)
+  kind: wilderness
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -121.65
+  - 46.1
+  - -121.35
+  - 46.35
+  pages:
+    alerts: https://www.fs.usda.gov/r06/giffordpinchot/alerts
+    conditions: https://www.fs.usda.gov/r06/giffordpinchot/about-area/mt-adams-climbing-conditions-report
+    permits: https://www.recreation.gov/activitypass/mt-adams-climb
+  permits:
+  - name: Mount Adams Climbing Pass (Cascade Volcano Pass), required above 7,000 ft
+    system: recreation.gov
+    url: https://www.recreation.gov/activitypass/mt-adams-climb
+    window:
+      start: 06-01
+      end: 09-30
+    walkup: Passes are bought online; the forest report says May 1 to September 30 passes are required and below 7,000 ft a free wilderness permit applies. Print two copies, carry one and display one in the vehicle.
+    verify_by: 2027-05-01
+  seasons:
+  - name: Cascade Volcano Pass climbing pass season
+    kind: quota
+    window:
+      start: 06-01
+      end: 09-30
+    note: Plan window June 1 to September 30. The forest page now reads May 1 to September 30; reconcile on re-verify.
+    verify_by: 2027-05-01
+  webcams: []
+  notes: The summit area east of the crest is Yakama Nation land; stay within the pass terms. The Mt. Adams climbing conditions report is a dated narrative, not a map.
+- id: mt_st_helens_nvm
+  name: Mount St. Helens National Volcanic Monument
+  kind: wilderness
+  manager: USFS
+  jurisdiction: WA
+  bbox:
+  - -122.35
+  - 46.05
+  - -122.0
+  - 46.35
+  pages:
+    alerts: https://www.fs.usda.gov/r06/giffordpinchot/alerts/mount-st-helens-volcanic-monument-restrictions
+    conditions: https://www.fs.usda.gov/r06/giffordpinchot/recreation/mount-st-helens-summit
+    closures: https://www.fs.usda.gov/r06/giffordpinchot/about-area/forest-orders
+    permits: https://www.mshinstitute.org/climbing-permits
+  permits:
+  - name: Mount St. Helens climbing permit (above 4,800 ft)
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4675309
+    window:
+      start: 04-01
+      end: 10-31
+    walkup: 'None in the quota season; sold online only, in monthly releases on the first of the preceding month at 7:00 AM Pacific. November 1 to March 31 permits are free and self-issued at the trailhead. Daily caps seen for 2024-25: 350 climbers April 1 to May 14, then 110 per day; check 2027 numbers.'
+    verify_by: 2027-03-01
+  seasons:
+  - name: Climbing quota season
+    kind: quota
+    window:
+      start: 04-01
+      end: 10-31
+    note: Typical; permits are needed year-round above 4,800 ft, quota applies in this window.
+    verify_by: 2027-03-01
+  webcams: []
+  notes: Nested in Gifford Pinchot. The monument is not a legal wilderness, so kind is wilderness here only to fit the registry. Upper SR 504 (Johnston Ridge) is closed by a slide per forest alerts; the climbing route uses Climbers Bivouac via Forest Road 83.
+- id: mount_si_nrca
+  name: Mount Si Natural Resources Conservation Area
+  kind: state_land
+  manager: WA_DNR
+  jurisdiction: WA
+  bbox:
+  - -121.8
+  - 47.43
+  - -121.55
+  - 47.6
+  pages:
+    alerts: https://dnr.wa.gov/MountSi
+    conditions: https://dnr.wa.gov/MountSi
+    permits: https://www.discoverpass.wa.gov/
+  permits:
+  - name: Discover Pass
+    system: self_issue
+    url: https://www.discoverpass.wa.gov/
+    walkup: Buy online or from a vendor; day or annual. No quota.
+    verify_by: 2027-01-15
+  seasons: []
+  notes: Parking at the Mount Si trailhead fills early on weekends. The DNR page is the closure source (it showed none at last check). Tiger Mountain and Raging River sit to the west.
+- id: tiger_mountain_sf
+  name: Tiger Mountain State Forest
+  kind: state_land
+  manager: WA_DNR
+  jurisdiction: WA
+  bbox:
+  - -122.1
+  - 47.4
+  - -121.85
+  - 47.55
+  pages:
+    alerts: https://dnr.wa.gov/forest-and-trust-lands/tiger-mountain-and-raging-river-state-forests
+    conditions: https://dnr.wa.gov/forest-and-trust-lands/tiger-mountain-and-raging-river-state-forests
+    permits: https://www.discoverpass.wa.gov/
+  permits:
+  - name: Discover Pass
+    system: self_issue
+    url: https://www.discoverpass.wa.gov/
+    walkup: Buy online or from a vendor; no quota.
+    verify_by: 2027-01-15
+  seasons: []
+  notes: 'Working forest: logging and road work close trails and roads without notice; DNR posts closures on its recreation pages and trailhead signs. Shares a page with Raging River State Forest.'
+- id: mt_pilchuck_sp
+  name: Mount Pilchuck State Park
+  kind: state_park
+  manager: WA_State_Parks
+  jurisdiction: WA
+  bbox:
+  - -121.88
+  - 48.02
+  - -121.72
+  - 48.1
+  pages:
+    alerts: https://parks.wa.gov/about/news-announcements/alerts
+    conditions: https://parks.wa.gov/find-parks/state-parks/mount-pilchuck-state-park
+    roads: https://www.fs.usda.gov/r06/mbs/alerts
+    permits: https://www.fs.usda.gov/r06/mbs/passes
+  permits:
+  - name: Northwest Forest Pass or America the Beautiful pass
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/mbs/passes
+    walkup: Display at the trailhead; the trailhead is on USFS land so the Discover Pass is not valid.
+    verify_by: 2027-01-15
+  seasons:
+  - name: Mt. Pilchuck Road (FR 42/4208) winter gate
+    kind: gate
+    window:
+      start: 05-26
+      end: 11-22
+    note: Typical; varies. The USFS closes the road past the Heather Lake trailhead gate in winter; the 2025-26 closure ran November 22, 2025 to May 26, 2026. Road is rough gravel, high clearance recommended.
+    verify_by: 2027-05-01
+  webcams: []
+  notes: The park begins on Forest Service land; the road, gate, and pass are the MBS forest's, so read mbs_nf alerts (Darrington district) for access. Lookout summit is a snow route into July.
+- id: wa_sno_park_program
+  name: Washington Sno-Park program
+  kind: state_land
+  manager: WA_State_Parks
+  jurisdiction: WA
+  bbox:
+  - -124.8
+  - 45.5
+  - -116.9
+  - 49.0
+  pages:
+    alerts: https://parks.wa.gov/about/news-announcements/alerts
+    conditions: https://parks.wa.gov/winter
+    permits: https://parks.wa.gov/passes-permits/permits/sno-park-permits
+  permits:
+  - name: Sno-Park permit (one-day, seasonal, special groomed trail)
+    system: self_issue
+    url: https://parks.wa.gov/passes-permits/permits/sno-park-permits
+    window:
+      start: 11-01
+      end: 04-30
+    walkup: 'Buy online or at retail vendors (not sold at the sno-parks). Prices seen: one-day $25, seasonal $50, special groomed trail $70.'
+    verify_by: 2027-10-15
+  seasons:
+  - name: Sno-Park permit season
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: 'Permit sales window per State Parks. Enforcement dates conflict across sources: a 2022 State Parks release says required December 1 to April 30, some Forest Service sno-park pages say December 1 to March 31. Confirm on parks.wa.gov/winter.'
+    verify_by: 2027-10-15
+  webcams: []
+  notes: 'Program-level entry: the bbox is all of Washington, so the resolver must treat it as a season switch (apply when a day is on snow in winter), never as a container that wins a point. Individual lots are on the find-sno-parks page; site rules and grooming vary.'
+- id: mt_hood_nf
+  name: Mt. Hood National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -122.3
+  - 44.7
+  - -121.1
+  - 45.75
+  districts:
+  - Hood River
+  - Zigzag
+  - Clackamas River
+  - Barlow
+  pages:
+    alerts: https://www.fs.usda.gov/r06/mthood/alerts
+    conditions: https://www.fs.usda.gov/r06/mthood/conditions
+    roads: https://www.fs.usda.gov/r06/mthood/conditions
+    closures: https://www.fs.usda.gov/r06/mthood/alerts
+    permits: https://www.fs.usda.gov/r06/mthood/permits
+  permits:
+  - name: Mt. Hood climbing permit
+    system: recreation.gov
+    url: https://www.recreation.gov/activitypass/AP21894
+    elevation_ft: 9500
+    walkup: Not limited and cannot sell out; 3-day or annual pass bought online.
+    verify_by: 2027-03-01
+  seasons:
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Permit required in designated Sno-Parks; see oregon_sno_parks.
+    verify_by: 2027-10-01
+  notes: 'No road or trail status map published (checked conditions, maps-guides, and data-tools pages). Highways: ODOT TripCheck. Forest passes: https://www.fs.usda.gov/r06/mthood/passes'
+- id: willamette_nf
+  name: Willamette National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -123.0
+  - 43.3
+  - -121.7
+  - 44.9
+  districts:
+  - Detroit
+  - Sweet Home
+  - McKenzie River
+  - Middle Fork
+  pages:
+    alerts: https://www.fs.usda.gov/r06/willamette/alerts
+    conditions: https://www.fs.usda.gov/r06/willamette/conditions
+    roads: https://www.fs.usda.gov/r06/willamette/conditions
+    closures: https://www.fs.usda.gov/r06/willamette/alerts/fire-closures-current-wildfire-closures-willamette-national-forest
+    permits: https://www.fs.usda.gov/r06/willamette/permits
+  permits:
+  - name: Central Cascades Wilderness permits (Mt. Jefferson, Mt. Washington, Three Sisters)
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4675311
+    window:
+      start: 06-15
+      end: 10-15
+    walkup: None; permits are not sold at Forest Service offices. See central_cascades_wilderness.
+    verify_by: 2027-05-15
+  seasons:
+  - name: OR 242 McKenzie Pass
+    kind: road
+    window:
+      start: 06-01
+      end: 10-31
+    note: Closed to vehicles in winter; opening is set by snow clearing, typically late May to mid June. ODOT TripCheck and https://www.oregon.gov/odot/regions/pages/mckenzie-highway.aspx are authoritative.
+    verify_by: 2027-05-01
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Permit required in designated Sno-Parks (Santiam Pass, Willamette Pass areas).
+    verify_by: 2027-10-01
+  notes: No road or trail status map published (conditions page links only TripCheck and an Oregon State Marine Board river map). Nests the Central Cascades Wilderness unit, which also overlaps Deschutes NF.
+- id: deschutes_nf
+  name: Deschutes National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -122.2
+  - 43.0
+  - -120.7
+  - 44.9
+  districts:
+  - Bend-Fort Rock
+  - Crescent
+  - Sisters
+  pages:
+    alerts: https://www.fs.usda.gov/r06/deschutes/alerts
+    conditions: https://www.fs.usda.gov/r06/deschutes/conditions
+    roads: https://www.fs.usda.gov/r06/deschutes/conditions
+    closures: https://www.fs.usda.gov/r06/deschutes/alerts
+    permits: https://www.fs.usda.gov/r06/deschutes/permits
+  permits:
+  - name: Central Cascades Wilderness permits (Three Sisters, Mt. Washington, Mt. Jefferson)
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4675311
+    window:
+      start: 06-15
+      end: 10-15
+    walkup: None; see central_cascades_wilderness.
+    verify_by: 2027-05-15
+  seasons:
+  - name: Cascade Lakes Highway (OR 46) beyond Mt. Bachelor
+    kind: road
+    window:
+      start: 05-25
+      end: 11-15
+    note: Winter closure past Mt. Bachelor to the Deschutes Bridge area; reopening date varies with snow. Deschutes County posts status at https://www.deschutes.org/road/page/news-and-closures
+    verify_by: 2027-05-01
+  - name: OR 242 McKenzie Pass
+    kind: road
+    window:
+      start: 06-01
+      end: 10-31
+    note: Shared with Willamette NF; closed in winter.
+    verify_by: 2027-05-01
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Many Sno-Parks on Cascade Lakes Highway and Santiam Pass.
+    verify_by: 2027-10-01
+  notes: No road or trail status map published; the conditions page offers an OHV conditions report at https://www.fs.usda.gov/r06/deschutes/conditions/ohv-conditions-report. South Sister (44.103, -121.769) falls in this forest and in central_cascades_wilderness.
+- id: umpqua_nf
+  name: Umpqua National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -123.3
+  - 42.7
+  - -121.9
+  - 43.8
+  districts:
+  - Cottage Grove
+  - Diamond Lake
+  - North Umpqua
+  - Tiller
+  pages:
+    alerts: https://www.fs.usda.gov/r06/umpqua/alerts
+    conditions: https://www.fs.usda.gov/r06/umpqua/conditions
+    roads: https://www.fs.usda.gov/r06/umpqua/conditions
+    closures: https://www.fs.usda.gov/r06/umpqua/alerts
+    permits: https://www.fs.usda.gov/r06/umpqua/permits
+  seasons:
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Diamond Lake area Sno-Parks.
+    verify_by: 2027-10-01
+  notes: No road or trail status map published. Conditions page defers to TripCheck, including https://www.tripcheck.com/Pages/Scenic-Byways-Rogue-Umpqua. The offices page lists ranger stations (North Umpqua, Tiller, Toketee), not districts by name; the district list is from convention and should be confirmed.
+- id: rogue_river_siskiyou_nf
+  name: Rogue River-Siskiyou National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -124.4
+  - 41.9
+  - -121.9
+  - 43.2
+  districts:
+  - Gold Beach
+  - High Cascades
+  - Powers
+  - Siskiyou Mountains
+  - Wild Rivers
+  pages:
+    alerts: https://www.fs.usda.gov/r06/rogue-siskiyou/alerts
+    conditions: https://www.fs.usda.gov/r06/rogue-siskiyou/recreation
+    roads: https://www.fs.usda.gov/r06/rogue-siskiyou/maps-guides
+    closures: https://www.fs.usda.gov/r06/rogue-siskiyou/alerts
+    permits: https://www.fs.usda.gov/r06/rogue-siskiyou/permits
+  seasons:
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Siskiyou Summit and Mt. Ashland area Sno-Parks.
+    verify_by: 2027-10-01
+  notes: 'This forest has no dedicated conditions page (the /conditions path returns 404); conditions points at the recreation page and roads at visitor maps. Alerts carry seasonal restrictions such as Illinois River Road. The only interactive map on the forest is the generic Forest Service Interactive Visitor Map, which does not state closure status, so no map_url. Bbox includes a small northern California strip of the forest. Highways: ODOT TripCheck.'
+- id: wallowa_whitman_nf
+  name: Wallowa-Whitman National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -118.9
+  - 44.2
+  - -116.4
+  - 46.3
+  districts:
+  - Whitman
+  - La Grande
+  - Wallowa Valley
+  - Eagle Cap
+  - Hells Canyon NRA
+  pages:
+    alerts: https://www.fs.usda.gov/r06/wallowa-whitman/alerts
+    conditions: https://www.fs.usda.gov/r06/wallowa-whitman/conditions
+    roads: https://www.fs.usda.gov/r06/wallowa-whitman/conditions
+    closures: https://www.fs.usda.gov/r06/wallowa-whitman/alerts
+    permits: https://www.fs.usda.gov/r06/wallowa-whitman/permits
+  seasons:
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Anthony Lakes, Tollgate, and Wallowa Mountains area lots.
+    verify_by: 2027-10-01
+  notes: No road or trail status map published. The conditions page hosts the Forest Road and Access Report and links per-area trail reports, e.g. https://www.fs.usda.gov/r06/wallowa-whitman/recreation/trail-report-wallowa-mtns-and-eagle-cap-wilderness. Nests eagle_cap_wilderness. Hells Canyon NRA extends into Idaho.
+- id: umatilla_nf
+  name: Umatilla National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -119.5
+  - 44.6
+  - -117.4
+  - 46.4
+  districts:
+  - Pomeroy & Walla Walla
+  - Heppner
+  - North Fork John Day
+  pages:
+    alerts: https://www.fs.usda.gov/r06/umatilla/alerts
+    conditions: https://www.fs.usda.gov/r06/umatilla/conditions
+    roads: https://www.fs.usda.gov/r06/umatilla/conditions
+    closures: https://www.fs.usda.gov/r06/umatilla/alerts
+    permits: https://www.fs.usda.gov/r06/umatilla/permits
+  seasons:
+  - name: Oregon Sno-Park permit
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: Applies to designated Sno-Parks on the forest; Washington lots use the WA Sno-Park system.
+    verify_by: 2027-10-01
+  notes: No road or trail status map published. Conditions page defers to ODOT TripCheck, WSDOT and Idaho 511. The northern third of the forest lies in Washington (Pomeroy); the jurisdiction field is OR, so the resolver should check the point's state before using OR road and Sno-Park rules.
+- id: idaho_panhandle_nf
+  name: Idaho Panhandle National Forests
+  kind: national_forest
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -117.3
+  - 46.7
+  - -115.4
+  - 49.0
+  districts:
+  - St. Joe
+  - Coeur d'Alene River
+  - Bonners Ferry
+  - Priest Lake
+  - Sandpoint
+  pages:
+    alerts: https://www.fs.usda.gov/r01/idahopanhandle/alerts
+    conditions: https://www.fs.usda.gov/r01/idahopanhandle/conditions
+    roads: https://511.idaho.gov
+    closures: https://www.fs.usda.gov/r01/idahopanhandle/alerts
+    permits: https://www.fs.usda.gov/r01/idahopanhandle/permits
+  seasons:
+  - name: Park N' Ski areas (Hanna Flats, Chipmunk Rapids)
+    kind: sno_park
+    window:
+      start: 11-15
+      end: 04-30
+    note: Idaho Park N' Ski permit required; see idaho_park_n_ski.
+    verify_by: 2027-10-01
+  notes: 'No road or trail status map published; the conditions page links an Idaho fire restrictions ArcGIS viewer and a prescribed fire StoryMap, neither a road status map. Road conditions on the conditions page defer to Idaho 511. Forest also reaches into northeastern Washington and western Montana. Local avalanche center: https://www.idahopanhandleavalanche.org/'
+- id: nez_perce_clearwater_nf
+  name: Nez Perce-Clearwater National Forests
+  kind: national_forest
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -116.9
+  - 45.1
+  - -114.4
+  - 47.3
+  districts:
+  - Lochsa-Powell
+  - Moose Creek
+  - North Fork
+  - Palouse
+  - Red River
+  - Salmon River
+  pages:
+    alerts: https://www.fs.usda.gov/r01/nezperce-clearwater/alerts
+    conditions: https://www.fs.usda.gov/r01/nezperce-clearwater/conditions
+    roads: https://www.fs.usda.gov/media/235417
+    closures: https://www.fs.usda.gov/r01/nezperce-clearwater/alerts
+    permits: https://www.fs.usda.gov/r01/nezperce-clearwater/permits
+  seasons:
+  - name: Park N' Ski area (Palouse Divide)
+    kind: sno_park
+    window:
+      start: 11-15
+      end: 04-30
+    note: Idaho Park N' Ski permit required; see idaho_park_n_ski.
+    verify_by: 2027-10-01
+  notes: No road or trail status map published. The roads page is an 18 MB seasonal access guide PDF (updated April 2025) showing which roads are open at what times of year, not live status. Nests selway_bitterroot_wilderness and part of frank_church_wilderness.
+- id: sawtooth_nf
+  name: Sawtooth National Forest and Sawtooth National Recreation Area
+  kind: national_forest
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -115.8
+  - 41.9
+  - -113.0
+  - 44.6
+  districts:
+  - Fairfield
+  - Ketchum
+  - Minidoka
+  - Sawtooth NRA (Stanley)
+  pages:
+    alerts: https://www.fs.usda.gov/r04/sawtooth/alerts
+    conditions: https://www.fs.usda.gov/r04/sawtooth/conditions
+    roads: https://www.fs.usda.gov/r04/sawtooth/maps-guides/motor-vehicle-use-maps
+    closures: https://www.fs.usda.gov/r04/sawtooth/alerts
+    permits: https://www.fs.usda.gov/r04/sawtooth/permits
+  notes: No road or trail status map published. The interactive maps page offers an MVUM finder (legal open routes, not live status) and a fire danger rating map, so no map_url. Idaho 511 covers highways. The Sawtooth Wilderness is nested as sawtooth_wilderness; Minidoka district reaches the Utah line.
+- id: boise_nf
+  name: Boise National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -116.2
+  - 43.2
+  - -114.8
+  - 44.5
+  districts:
+  - Cascade
+  - Emmett
+  - Idaho City
+  - Lowman
+  - Mountain Home
+  pages:
+    alerts: https://www.fs.usda.gov/r04/boise/alerts
+    conditions: https://www.fs.usda.gov/r04/boise/conditions
+    roads: https://511.idaho.gov
+    closures: https://www.fs.usda.gov/r04/boise/data-tools/interactive-maps/map-forest-closures
+    permits: https://www.fs.usda.gov/r04/boise/permits
+  map_url: https://www.fs.usda.gov/r04/boise/data-tools/interactive-maps/map-forest-closures
+  map_center: Boise National Forest, ID (page does not state an extent; page last updated 2025-08-04)
+  seasons:
+  - name: Park N' Ski area (Banner Ridge)
+    kind: sno_park
+    window:
+      start: 11-15
+      end: 04-30
+    note: Idaho Park N' Ski permit required; see idaho_park_n_ski.
+    verify_by: 2027-10-01
+  notes: Publishes an Interactive Alerts and Closures Map (Map of Forest Closures) that displays forest orders; the signed order on the forest site is the authoritative source. The map page does not say whether it shows road status directly. Also publishes an MVUM finder at https://www.fs.usda.gov/r04/boise/data-tools/interactive-maps/motorized-vehicle-use-maps-mvum
+- id: payette_nf
+  name: Payette National Forest
+  kind: national_forest
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -116.8
+  - 44.1
+  - -115.2
+  - 45.4
+  districts:
+  - Council
+  - Krassel
+  - McCall
+  - New Meadows
+  - Weiser
+  pages:
+    alerts: https://www.fs.usda.gov/r04/payette/alerts
+    conditions: https://www.fs.usda.gov/r04/payette/conditions
+    roads: https://www.fs.usda.gov/r04/payette/offices
+    closures: https://www.fs.usda.gov/r04/payette/alerts
+    permits: https://www.fs.usda.gov/r04/payette/permits
+  notes: 'No road or trail status map published. The conditions page tells visitors to call the supervisor''s office or Council district for current road conditions and links Idaho 511. The Interactive Visitor Map (ArcGIS Experience) exists but the page does not say it shows closure status, so it is not recorded as map_url. Payette Avalanche Center: http://payetteavalanche.org/. Nests the western part of frank_church_wilderness.'
+- id: central_cascades_wilderness
+  name: Central Cascades Wilderness Permit System (Mt. Jefferson, Mt. Washington, Three Sisters)
+  kind: wilderness
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -122.2
+  - 43.95
+  - -121.55
+  - 44.85
+  pages:
+    alerts: https://www.fs.usda.gov/r06/deschutes/alerts
+    conditions: https://www.fs.usda.gov/r06/deschutes/wilderness
+    roads: https://www.fs.usda.gov/r06/deschutes/conditions
+    closures: https://www.fs.usda.gov/r06/willamette/alerts
+    permits: https://fs.usda.gov/r06/willamette/permits/central-cascades-wilderness-permits
+  permits:
+  - name: Central Cascades Wilderness overnight permit
+    system: recreation.gov
+    url: https://www.recreation.gov/permits/4675311
+    window:
+      start: 06-15
+      end: 10-15
+    walkup: None. Permits are not sold at Forest Service offices; reserve on recreation.gov, the app, or 1-877-444-6777.
+    verify_by: 2027-05-15
+  - name: Central Cascades Wilderness day-use permit (limited-entry trailheads)
+    system: recreation.gov
+    url: https://www.recreation.gov/ticket/300009/ticket/2009
+    window:
+      start: 06-15
+      end: 10-15
+    walkup: Day-use permits are required only at the limited-entry trailheads (19 of 79); the other roughly 60 trailheads take a free self-issued permit at the trailhead.
+    verify_by: 2027-05-15
+  seasons:
+  - name: Central Cascades Wilderness permit season
+    kind: permit_window
+    window:
+      start: 06-15
+      end: 10-15
+    note: Overnight permit required at all entry points; day-use permit required at 19 limited-entry trailheads out of 79. Per the Forest Service, about 40 percent of each day's overnight quota is released the first Tuesday in April and the rest 7 days before the trip; day-use releases at 10 days and 2 days before. Release rules vary by year and sources differ, so verify. Older material (2021) listed a different season.
+    verify_by: 2027-05-15
+  notes: One unit for Mt. Jefferson, Mt. Washington, and Three Sisters wildernesses. Nested inside Deschutes NF and Willamette NF by bbox. South Sister (44.103, -121.769) is inside. Waldo Lake and Diamond Peak wildernesses do not require this permit for overnight stays (and fall outside this bbox in part).
+- id: mt_hood_wilderness
+  name: Mt. Hood Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -121.95
+  - 45.2
+  - -121.5
+  - 45.5
+  pages:
+    alerts: https://www.fs.usda.gov/r06/mthood/alerts
+    conditions: https://www.fs.usda.gov/r06/mthood/conditions
+    roads: https://www.fs.usda.gov/r06/mthood/conditions
+    closures: https://www.fs.usda.gov/r06/mthood/alerts
+    permits: https://www.fs.usda.gov/r06/mthood/permits
+  permits:
+  - name: Mt. Hood climbing permit
+    system: recreation.gov
+    url: https://www.recreation.gov/activitypass/AP21894
+    elevation_ft: 9500
+    walkup: Permit is not limited and cannot sell out; 3-day or annual pass. Required for all travel above 9,500 ft in the wilderness.
+    verify_by: 2027-03-01
+  - name: Wilderness visitor permit (trailhead self-issue)
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/mthood/permits
+    walkup: Self-issued at trailhead boxes; confirm current requirement and any overnight limits on the permits page. A proposed high-Hood overnight permit appeared only in forum posts and is not confirmed.
+    verify_by: 2027-03-01
+  notes: Timberline Lodge (45.331, -121.711) is inside this bbox and inside mt_hood_nf. The Mark O. Hatfield Wilderness in the Columbia Gorge is a separate unit under Columbia River Gorge NSA, not covered here.
+- id: eagle_cap_wilderness
+  name: Eagle Cap Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: OR
+  bbox:
+  - -117.6
+  - 44.95
+  - -116.85
+  - 45.45
+  pages:
+    alerts: https://www.fs.usda.gov/r06/wallowa-whitman/alerts
+    conditions: https://www.fs.usda.gov/r06/wallowa-whitman/recreation/trail-report-wallowa-mtns-and-eagle-cap-wilderness
+    roads: https://www.fs.usda.gov/r06/wallowa-whitman/conditions
+    closures: https://www.fs.usda.gov/r06/wallowa-whitman/alerts
+    permits: https://www.fs.usda.gov/r06/wallowa-whitman/permits
+  permits:
+  - name: Wilderness Visitor Permit
+    system: self_issue
+    url: https://www.fs.usda.gov/r06/wallowa-whitman/permits
+    walkup: Free, one permit per group, self-issued at registration boxes at each trailhead. No limited-entry or Lakes Basin quota found.
+    verify_by: 2027-05-15
+  notes: Nested inside wallowa_whitman_nf. Trail report page covers the Wallowa Mountains and Eagle Cap Wilderness.
+- id: sawtooth_wilderness
+  name: Sawtooth Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -115.3
+  - 43.8
+  - -114.75
+  - 44.3
+  pages:
+    alerts: https://www.fs.usda.gov/r04/sawtooth/alerts
+    conditions: https://www.fs.usda.gov/r04/sawtooth/conditions
+    roads: https://www.fs.usda.gov/r04/sawtooth/maps-guides/motor-vehicle-use-maps
+    closures: https://www.fs.usda.gov/r04/sawtooth/alerts
+    permits: https://www.fs.usda.gov/r04/sawtooth/wilderness
+  permits:
+  - name: Sawtooth Wilderness trailhead register permit
+    system: self_issue
+    url: https://www.fs.usda.gov/r04/sawtooth/wilderness
+    walkup: Self-issue registers at trailheads; no quota.
+    verify_by: 2027-05-15
+  notes: Nested inside sawtooth_nf. Trailhead around 44.0, -115.0 is inside this bbox. The conditions page links an SNRA Trails Report PDF at https://www.fs.usda.gov/media/247778
+- id: frank_church_wilderness
+  name: Frank Church-River of No Return Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -116.0
+  - 44.3
+  - -114.2
+  - 45.55
+  pages:
+    alerts: https://www.fs.usda.gov/r04/salmon-challis/alerts
+    conditions: https://www.fs.usda.gov/r04/payette/conditions
+    roads: https://www.fs.usda.gov/r04/payette/conditions
+    closures: https://www.fs.usda.gov/r04/salmon-challis/alerts
+    permits: https://www.fs.usda.gov/r04/salmon-challis/permits
+  permits:
+  - name: Middle Fork of the Salmon River permit (controlled season)
+    system: lottery
+    url: https://www.recreation.gov/permits/234623
+    window:
+      start: 05-28
+      end: 09-03
+    walkup: Cancellations are re-released on recreation.gov (confirmation window Feb 14 to Mar 15, then released Mar 16 at 8:00 AM MT; later cancellations within 24 hours). Lottery application window was reported as Dec 1 to Jan 31 by a third party only.
+    verify_by: 2027-04-01
+  - name: Wilderness land travel registration (trailhead register)
+    system: self_issue
+    url: https://www.fs.usda.gov/r04/salmon-challis/permits
+    walkup: Trailhead registers on the managing forest; confirm per entry point.
+    verify_by: 2027-05-15
+  seasons:
+  - name: Middle Fork Salmon lottery control season
+    kind: quota
+    window:
+      start: 05-28
+      end: 09-03
+    note: Dagger Falls to the Confluence; boating on the Middle Fork and Main Salmon requires a permit year-round. Main Salmon River permits are at https://www.recreation.gov/permits/234622 with their own control season, not recorded here.
+    verify_by: 2027-04-01
+  notes: Straddles Salmon-Challis, Payette, Boise, Bitterroot, and Nez Perce-Clearwater forests; the pages point to the Salmon-Challis NF, which manages most of it (outside this registry's forest list). Bbox is generous.
+- id: selway_bitterroot_wilderness
+  name: Selway-Bitterroot Wilderness
+  kind: wilderness
+  manager: USFS
+  jurisdiction: ID
+  bbox:
+  - -115.8
+  - 45.6
+  - -113.9
+  - 46.8
+  pages:
+    alerts: https://www.fs.usda.gov/r01/nezperce-clearwater/alerts
+    conditions: https://www.fs.usda.gov/r01/nezperce-clearwater/conditions
+    roads: https://www.fs.usda.gov/media/235417
+    closures: https://www.fs.usda.gov/r01/nezperce-clearwater/alerts
+    permits: https://www.fs.usda.gov/r01/nezperce-clearwater/permits
+  permits:
+  - name: Selway River permit (controlled season)
+    system: lottery
+    url: https://www.recreation.gov/permits/234624
+    window:
+      start: 05-15
+      end: 07-31
+    walkup: One party of up to 16 launches per day in season; lottery applications due January 31; watch recreation.gov for cancellations.
+    verify_by: 2027-04-01
+  - name: Wilderness trailhead register
+    system: self_issue
+    url: https://www.fs.usda.gov/r01/nezperce-clearwater/permits
+    walkup: Trailhead registers; no quota found for land travel.
+    verify_by: 2027-05-15
+  seasons:
+  - name: Selway River controlled use season
+    kind: quota
+    window:
+      start: 05-15
+      end: 07-31
+    note: Permit is issued through the Bitterroot NF (Montana) on recreation.gov. Outside the season no permit is required and groups are capped at 20.
+    verify_by: 2027-04-01
+  notes: Straddles Idaho and Montana (Nez Perce-Clearwater and Bitterroot forests). jurisdiction ID covers the Idaho side.
+- id: oregon_state_parks
+  name: Oregon State Parks
+  kind: state_park
+  manager: OR_State_Parks
+  jurisdiction: OR
+  bbox:
+  - -124.7
+  - 41.9
+  - -116.4
+  - 46.3
+  pages:
+    alerts: https://stateparks.oregon.gov/index.cfm?do=v.feature-article&articleId=376
+    conditions: https://stateparks.oregon.gov/index.cfm?do=v.page&id=93
+    roads: https://tripcheck.com/
+    closures: https://stateparks.oregon.gov/index.cfm?do=v.page&id=93
+    permits: https://stateparks.oregon.gov/index.cfm?amp=&do=v.page&id=90
+  permits:
+  - name: Day-use parking permit
+    system: walkup
+    url: https://stateparks.oregon.gov/index.cfm?amp=&do=v.page&id=90
+    walkup: Daily and annual permits sold on site at fee parks.
+    verify_by: 2027-03-01
+  seasons:
+  - name: Smith Rock raptor nesting climbing closures
+    kind: gate
+    window:
+      start: 01-15
+      end: 08-01
+    note: Some climbing areas closed or limited for golden eagle and falcon nesting; closed routes are signed. Park-specific notices are posted on each park profile, there is no single closures page.
+    verify_by: 2027-01-10
+  notes: 'Statewide fallback entry: the resolver should prefer a smaller containing bbox. Named examples: Smith Rock (44.368, -121.141) https://stateparks.oregon.gov/index.cfm?do=park.profile&parkId=36 and Silver Falls (44.88, -122.65) https://stateparks.oregon.gov/index.cfm?do=park.profile&parkId=151. Alerts and closures are posted per park profile as notices; the alerts URL here is the general storm-conditions article. First-come camping: https://stateparks.oregon.gov/index.cfm?do=reserve.first-come'
+- id: oregon_sno_parks
+  name: Oregon Sno-Park Program
+  kind: state_land
+  manager: ODOT
+  jurisdiction: OR
+  bbox:
+  - -124.0
+  - 41.95
+  - -116.45
+  - 46.25
+  pages:
+    alerts: https://tripcheck.com/
+    conditions: https://tripcheck.com/
+    roads: https://tripcheck.com/
+    closures: https://tripcheck.com/
+    permits: https://www.oregon.gov/ODOT/DMV/Pages/Vehicle/sno_park_permits.aspx
+  permits:
+  - name: Sno-Park permit (annual, 3-day, daily)
+    system: walkup
+    url: https://www.oregon.gov/ODOT/DMV/Pages/Vehicle/sno_park_permits.aspx
+    window:
+      start: 11-01
+      end: 04-30
+    walkup: Sold at DMV field offices and retail agents; annual permit online via DMV2U with a printable interim permit. California and Idaho winter parking permits are honored. Non-refundable.
+    verify_by: 2027-10-01
+  seasons:
+  - name: Sno-Park permit season
+    kind: sno_park
+    window:
+      start: 11-01
+      end: 04-30
+    note: 'Permit required in designated Sno-Parks. Program page: https://www.oregon.gov/odot/Maintenance/Pages/Sno-Park-Program.aspx. Location list is on TripCheck.'
+    verify_by: 2027-10-01
+  notes: Statewide program, bbox overlaps every Oregon forest. Lots physically sit on national forest land; treat this as a rule overlay, not a place.
+- id: idaho_park_n_ski
+  name: Idaho Park N' Ski
+  kind: state_land
+  manager: ID_Parks
+  jurisdiction: ID
+  bbox:
+  - -117.3
+  - 42.0
+  - -111.0
+  - 49.0
+  pages:
+    alerts: https://parksandrecreation.idaho.gov/news/
+    conditions: https://parksandrecreation.idaho.gov/activities/xc-skiing/
+    roads: https://511.idaho.gov
+    closures: https://parksandrecreation.idaho.gov/news/
+    permits: https://parksandrecreation.idaho.gov/activities/xc-skiing/
+  permits:
+  - name: Park N' Ski permit
+    system: walkup
+    url: https://parksandrecreation.idaho.gov/activities/xc-skiing/
+    window:
+      start: 11-15
+      end: 04-30
+    walkup: Annual and daily permits; buyers choose which area receives the fee. Not included in the Idaho State Parks Passport.
+    verify_by: 2027-10-01
+  seasons:
+  - name: Park N' Ski permit season
+    kind: sno_park
+    window:
+      start: 11-15
+      end: 04-30
+    note: 'North areas: https://parksandrecreation.idaho.gov/parks/priest-lake/north-idaho-park-n-ski/ ; south areas: https://parksandrecreation.idaho.gov/activities/xc-skiing/south-idaho-park-n-ski/. Area count differs across official pages (14 to 17).'
+    verify_by: 2027-10-01
+  notes: Statewide rule overlay. Idaho State Parks has no live alerts or closures page found; the news page is the closest.
+- id: idaho_state_parks
+  name: Idaho Parks and Recreation (state parks)
+  kind: state_park
+  manager: ID_Parks
+  jurisdiction: ID
+  bbox:
+  - -117.3
+  - 42.0
+  - -111.0
+  - 49.0
+  pages:
+    alerts: https://parksandrecreation.idaho.gov/news/
+    conditions: https://parksandrecreation.idaho.gov/find-a-park/
+    roads: https://511.idaho.gov
+    closures: https://parksandrecreation.idaho.gov/news/
+    permits: https://parksandrecreation.idaho.gov/idaho-state-parks-passport/
+  permits:
+  - name: Idaho State Parks Passport
+    system: walkup
+    url: https://parksandrecreation.idaho.gov/idaho-state-parks-passport/
+    walkup: Purchased with vehicle registration or at park entrances; access depends on capacity, construction, fire, and flood closures.
+    verify_by: 2027-03-01
+  notes: Statewide fallback entry; prefer a smaller containing bbox. No dedicated live closures page found, closures appear on park pages and the news page.
+- id: garibaldi_pp
+  name: Garibaldi Provincial Park
+  kind: bc_park
+  manager: BC_Parks
+  jurisdiction: BC
+  bbox:
+  - -123.4
+  - 49.6
+  - -122.75
+  - 50.25
+  pages:
+    alerts: https://bcparks.ca/active-advisories/
+    conditions: https://bcparks.ca/garibaldi-park/
+    roads: https://www.drivebc.ca/
+    closures: https://bcparks.ca/active-advisories/
+    permits: https://bcparks.ca/reservations/day-use-passes/
+  permits:
+  - name: Day-use pass (Rubble Creek, Diamond Head, Cheakamus)
+    system: bc_parks
+    url: https://bcparks.ca/reservations/day-use-passes/
+    window:
+      start: 06-12
+      end: 10-12
+    walkup: 'None; passes release online at 7:00 AM Pacific two days ahead and sell out quickly. 2026 rules: Rubble Creek and Diamond Head Friday to Monday, Cheakamus daily.'
+    verify_by: 2027-05-15
+  - name: Backcountry camping reservation (Garibaldi Lake, Taylor Meadows, Elfin Lakes, Cheakamus Lake)
+    system: bc_parks
+    url: https://bcparks.ca/reservations/backcountry-camping/
+    walkup: Reservations required for the designated campgrounds; a backcountry reservation holder does not need a day-use pass.
+    verify_by: 2027-05-15
+  seasons:
+  - name: Garibaldi day-use pass season
+    kind: permit_window
+    window:
+      start: 06-12
+      end: 10-12
+    note: Dates from the 2026 BC Parks release; 2027 dates unknown.
+    verify_by: 2027-05-15
+  notes: Garibaldi Lake (49.93, -123.02) is inside this bbox. Highway 99 closures via DriveBC. Avalanche terrain is in the Avalanche Canada Sea-to-Sky area.
+- id: joffre_lakes_pp
+  name: Joffre Lakes Provincial Park (Pipi7iyekw)
+  kind: bc_park
+  manager: BC_Parks
+  jurisdiction: BC
+  bbox:
+  - -122.6
+  - 50.3
+  - -122.4
+  - 50.45
+  pages:
+    alerts: https://bcparks.ca/active-advisories/
+    conditions: https://bcparks.ca/joffre-lakes-park/
+    roads: https://www.drivebc.ca/
+    closures: https://bcparks.ca/active-advisories/
+    permits: https://bcparks.ca/reservations/day-use-passes/
+  permits:
+  - name: Day-use trail pass (one per person)
+    system: bc_parks
+    url: https://bcparks.ca/reservations/day-use-passes/
+    window:
+      start: 05-11
+      end: 10-25
+    walkup: None; released online at 7:00 AM Pacific two days ahead.
+    verify_by: 2027-04-15
+  seasons:
+  - name: Joffre Lakes trail pass season
+    kind: permit_window
+    window:
+      start: 05-11
+      end: 10-25
+    note: From the 2026 release. The 2026 release also listed closures to recreational visitors June 20 to 27 and September 8 to 30; recheck for 2027.
+    verify_by: 2027-04-15
+  notes: Highway 99 (Duffey Lake Road) access; see bc_sea_to_sky_corridor for road status.
+- id: ec_manning_pp
+  name: E.C. Manning Provincial Park
+  kind: bc_park
+  manager: BC_Parks
+  jurisdiction: BC
+  bbox:
+  - -121.2
+  - 49.0
+  - -120.6
+  - 49.3
+  pages:
+    alerts: https://bcparks.ca/active-advisories/
+    conditions: https://bcparks.ca/ec-manning-park/
+    roads: https://www.drivebc.ca/
+    closures: https://bcparks.ca/active-advisories/
+    permits: https://bcparks.ca/reservations/backcountry-camping/
+  permits:
+  - name: Backcountry camping fee and registration
+    system: bc_parks
+    url: https://bcparks.ca/reservations/backcountry-camping/
+    walkup: Frontcountry campgrounds are reserved through BC Parks; confirm the current backcountry registration method on the park page.
+    verify_by: 2027-05-15
+  notes: Highway 3 between Hope and Princeton runs through the park; closures via DriveBC. Borders the North Cascades region in Washington. The park page URL redirects from the older /explore/parkpgs/ecmanning/ path.
+- id: golden_ears_pp
+  name: Golden Ears Provincial Park
+  kind: bc_park
+  manager: BC_Parks
+  jurisdiction: BC
+  bbox:
+  - -122.6
+  - 49.3
+  - -122.3
+  - 49.55
+  pages:
+    alerts: https://bcparks.ca/active-advisories/
+    conditions: https://bcparks.ca/golden-ears-park/
+    roads: https://www.drivebc.ca/
+    closures: https://bcparks.ca/active-advisories/
+    permits: https://bcparks.ca/reservations/day-use-passes/
+  permits:
+  - name: Vehicle day-use pass
+    system: bc_parks
+    url: https://bcparks.ca/reservations/day-use-passes/
+    window:
+      start: 05-15
+      end: 09-07
+    walkup: 'None; released online at 7:00 AM Pacific two days ahead. 2026 rule: Friday to Monday until 3:30 PM.'
+    verify_by: 2027-04-15
+  seasons:
+  - name: Golden Ears day-use pass season
+    kind: permit_window
+    window:
+      start: 05-15
+      end: 09-07
+    note: Dates from the 2026 BC Parks release.
+    verify_by: 2027-04-15
+  notes: Reached from Maple Ridge via Golden Ears Way.
+- id: mount_assiniboine_pp
+  name: Mount Assiniboine Provincial Park
+  kind: bc_park
+  manager: BC_Parks
+  jurisdiction: BC
+  bbox:
+  - -115.85
+  - 50.7
+  - -115.45
+  - 51.05
+  pages:
+    alerts: https://bcparks.ca/active-advisories/
+    conditions: https://bcparks.ca/mount-assiniboine-park/
+    roads: https://www.drivebc.ca/
+    closures: https://bcparks.ca/active-advisories/
+    permits: https://bcparks.ca/reservations/backcountry-camping/
+  permits:
+  - name: Backcountry camping reservation
+    system: bc_parks
+    url: https://bcparks.ca/reservations/backcountry-camping/
+    walkup: Reservation expected for the Lake Magog, Mount Shark, and Og Lake campgrounds and cabins; confirm the site list and season on the park page.
+    verify_by: 2027-05-15
+  notes: Alpine terrain on the Alberta border; access is by trail, helicopter, or from Sunshine Village in Banff. No road access inside BC.
+- id: glacier_np_ca
+  name: Glacier National Park of Canada
+  kind: bc_park
+  manager: Parks_Canada
+  jurisdiction: BC
+  bbox:
+  - -117.8
+  - 51.1
+  - -117.2
+  - 51.45
+  pages:
+    alerts: https://parks.canada.ca/pn-np/bc/glacier/bulletins
+    conditions: https://parks.canada.ca/pn-np/bc/glacier/activ/randonee-hiking/etat-sentiers-trail-conditions
+    roads: https://parks.canada.ca/pn-np/bc/glacier/visit/hiver-winter/conduite-driving
+    closures: https://parks.canada.ca/pn-np/bc/glacier/bulletins
+    permits: https://parks.canada.ca/pn-np/bc/glacier/activ/passez-stay/arrierepays-backcountry
+  permits:
+  - name: Winter Permit System (all backcountry access)
+    system: walkup
+    url: https://parks.canada.ca/pn-np/bc/glacier/visit/hiver-winter/ski
+    window:
+      start: 11-15
+      end: 04-30
+    walkup: Issued at Summit Station when the Rogers Pass Centre is closed; a quiz is required for all permit holders. The end date follows the highway avalanche control program.
+    verify_by: 2027-10-15
+  - name: Summer backcountry camping permit
+    system: walkup
+    url: https://parks.canada.ca/pn-np/bc/glacier/activ/passez-stay/arrierepays-backcountry
+    window:
+      start: 07-01
+      end: 10-01
+    walkup: Permits at Summit Station for random camping; Hermit Meadows and Sir Donald sites run July 1 to October 1, snow dependent.
+    verify_by: 2027-06-01
+  seasons:
+  - name: Rogers Pass Winter Permit System
+    kind: permit_window
+    window:
+      start: 11-15
+      end: 04-30
+    note: Winter Restricted and Prohibited Areas apply; no backcountry camping in them.
+    verify_by: 2027-10-15
+  notes: Highway 1 through Rogers Pass closes for avalanche control for 2 to 8 hours or longer; Parks Canada defers to DriveBC for live status. Parks Canada reservation site returned 403 to curl and is not recorded.
+- id: kokanee_glacier_pp
+  name: Kokanee Glacier Provincial Park
+  kind: bc_park
+  manager: BC_Parks
+  jurisdiction: BC
+  bbox:
+  - -117.3
+  - 49.65
+  - -116.95
+  - 49.95
+  pages:
+    alerts: https://bcparks.ca/active-advisories/
+    conditions: https://bcparks.ca/kokanee-glacier-park/
+    roads: https://www.drivebc.ca/
+    closures: https://bcparks.ca/active-advisories/
+    permits: https://bcparks.ca/reservations/backcountry-camping/
+  permits:
+  - name: Backcountry camping and cabin reservation
+    system: bc_parks
+    url: https://bcparks.ca/reservations/backcountry-camping/
+    walkup: Confirm which campgrounds and cabins take reservations on the park page.
+    verify_by: 2027-05-15
+  notes: Reached from Nelson and Kaslo via Kokanee Creek and Gibson Lake roads; forest service road status is a Recreation Sites and Trails BC matter, so check DriveBC and local notices.
+- id: bc_sea_to_sky_corridor
+  name: Sea-to-Sky and Duffey Lake corridor (Highway 99, Squamish to Lillooet)
+  kind: bc_crown
+  manager: BC_MoTT
+  jurisdiction: BC
+  bbox:
+  - -123.3
+  - 49.3
+  - -121.9
+  - 50.75
+  pages:
+    alerts: https://www.drivebc.ca/mobile/pub/events/
+    conditions: https://www.drivebc.ca/
+    roads: https://www.drivebc.ca/
+    closures: https://www.drivebc.ca/mobile/pub/events/
+    permits: https://bcparks.ca/reservations/day-use-passes/
+  seasons:
+  - name: Day-use pass overlay (Garibaldi, Joffre Lakes)
+    kind: permit_window
+    window:
+      start: 05-11
+      end: 10-25
+    note: Union of 2026 Joffre (May 11 to Oct 25) and Garibaldi (Jun 12 to Oct 12) pass seasons; see each park entry.
+    verify_by: 2027-04-15
+  notes: Road authority is DriveBC for Highway 99, including the Duffey Lake Road (Pemberton to Lillooet), which sees winter closures and slide delays. Covers the approach to garibaldi_pp and joffre_lakes_pp; resolver should prefer those park bboxes when a point falls inside them.
+- id: bc_kootenays
+  name: Kootenays (BC southeast interior)
+  kind: bc_crown
+  manager: BC_MoTT
+  jurisdiction: BC
+  bbox:
+  - -118.3
+  - 49.0
+  - -114.0
+  - 51.2
+  pages:
+    alerts: https://www.drivebc.ca/mobile/pub/events/
+    conditions: https://www.drivebc.ca/
+    roads: https://www.drivebc.ca/
+    closures: https://www.drivebc.ca/mobile/pub/events/
+    permits: https://bcparks.ca/reservations/backcountry-camping/
+  notes: Road authority is DriveBC (Highways 3, 3A, 6, 31, 95, 1 near Rogers Pass). Parks inside this bbox have their own entries (kokanee_glacier_pp; mount_assiniboine_pp and glacier_np_ca sit at or past its northern edge). Backcountry outside parks is Crown land with Recreation Sites and Trails BC notices, not recorded as a URL because no stable page confirmed. Avalanche forecasting is Avalanche Canada (Kootenay Boundary and Purcells regions).

@@ -1,0 +1,6 @@
+{
+  "trip": {"name": "South Sister from Devils Lake", "start": "2026-08-15", "end": "2026-08-15", "activity": "hike", "glaciated": false, "snow": false, "coastal": false},
+  "days": [
+    {"date": "2026-08-15", "trailhead": {"name": "Devils Lake", "lat": 44.034, "lon": -121.766, "elev_ft": 5450}, "high_point": {"name": "South Sister summit", "lat": 44.103, "lon": -121.769, "elev_ft": 10358}, "route_elev_band": [5450, 10358]}
+  ]
+}

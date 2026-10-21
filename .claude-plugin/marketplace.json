@@ -1,0 +1,12 @@
+{
+  "name": "pnw-outdoor-planner",
+  "description": "Trip research for the Pacific Northwest: one workflow, three skills.",
+  "owner": {"name": "Tanner O'Rourke"},
+  "plugins": [
+    {
+      "name": "pnw-outdoor-planner",
+      "source": "./",
+      "description": "Six-agent trip research workflow with a sourced go/no-go verdict; weather-report and avalanche-report skills included."
+    }
+  ]
+}

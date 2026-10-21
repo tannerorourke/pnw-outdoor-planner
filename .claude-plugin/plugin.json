@@ -1,0 +1,8 @@
+{
+  "name": "pnw-outdoor-planner",
+  "version": "0.1.0",
+  "description": "Researches a Pacific Northwest outdoor trip across six factor agents and returns a sourced go/no-go verdict, with weather and avalanche skills usable on their own.",
+  "author": {"name": "Tanner O'Rourke"},
+  "repository": "https://github.com/tannerorourke/pnw-outdoor-planner",
+  "keywords": ["outdoors", "mountaineering", "weather", "avalanche", "pacific-northwest", "workflow"]
+}

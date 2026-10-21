@@ -1,0 +1,559 @@
+# Transcribed from outdoor-trip-research-workflow-plan.md (Vault/Projects/FUTURE/outdoor-trip-research)
+# on 2026-10-20.
+version: 1
+revised: 2026-10-20
+agents:
+  access: {question: "Can I get to the trailhead, and am I allowed to be there?", factors: ["roads", "gates", "forest-road state", "closure orders including fire closures", "parking", "permits and quotas", "passes", "ferries"]}
+  sky: {question: "What will the weather do, each day, and how sure is that?", factors: ["forecast", "freezing level", "wind", "precipitation timing", "visibility", "smoke", "active NWS products"]}
+  ground: {question: "What is the route like right now?", factors: ["trail and route conditions", "snow line", "glacier and crevasse state", "stream crossings", "water", "webcams and satellite", "tides", "same-month historic reports when nothing recent exists"]}
+  snow: {question: "Is the snowpack a threat on this terrain? Snow trips only", factors: ["avalanche danger by band and aspect", "problem types", "recent activity", "snowpack structure", "slope angle by route section"]}
+  clock: {question: "How long will it take, and when do I have to leave and turn around?", factors: ["distance and gain", "daylight", "tides", "ferry times", "pace assumptions", "camp and water stops"]}
+  contingency: {question: "What happens if it goes wrong?", factors: ["bailout points", "cell coverage", "satellite device", "SAR contact", "nearest hospital", "who holds the itinerary"]}
+hard_stops:
+  - id: avalanche_high
+    rule: "Avalanche danger High or Extreme in any band the route touches, on the day it touches it."
+    result: wait_or_nogo
+  - id: nws_warning
+    rule: "A warning-level NWS product on the route's zone for the push day: winter storm, high wind, lightning in the forecast, or forecast whiteout at the route elevation; the old numeric line, wind over 35 mph at the exposed elevation, stays as the wind reading of this stop."
+    result: wait_or_nogo
+  - id: road_or_closure
+    rule: "Road closed with no documented alternative reaching the trailhead, or a closure order (fire, hazard, wildlife) covering the route."
+    result: wait_or_nogo
+  - id: permit_unavailable
+    rule: "A required permit with no availability on the dates and no walk-up path."
+    result: wait_or_nogo
+  - id: glacier_no_report
+    rule: "A glaciated route with no condition report inside 14 days and no webcam or satellite confirmation of the route's state."
+    result: wait_or_nogo
+  - id: fire_or_volcano
+    rule: "Fire perimeter or evacuation level covering the route or its exit, or the volcano's alert level above Normal."
+    result: wait_or_nogo
+sources:
+  - id: nws_points
+    name: "api.weather.gov point forecast"
+    group: weather
+    url: "https://www.weather.gov/documentation/services-web-api"
+    region: ["WA", "OR", "ID"]
+    provides: "7-day periods; hourly temperature, wind, gust, precipitation probability and amount, sky cover, visibility; grid snow level where the office publishes it"
+    enters_plan: "The day-by-day forecast layer. Hourly wind and gust at the route's elevation set the summit-window judgment; precipitation timing sets the start; the `cwa` field in the points response names the office whose discussion is read next"
+    as_of: "Issued roughly twice daily; the response carries `updateTime`"
+    fetch: api
+    agent: sky
+    hard_stop: ["nws_warning"]
+  - id: nws_afd
+    name: "NWS Area Forecast Discussion"
+    group: weather
+    url: "https://api.weather.gov/products/types/AFD/locations/{cwa}"
+    region: ["SEW", "PQR", "PDT", "OTX", "MFR", "BOI", "MSO"]
+    provides: "The forecaster's own text: model disagreement, timing uncertainty, confidence in the synoptic pattern"
+    enters_plan: "The forecast confidence tag. A point forecast never states its own uncertainty; the discussion does. A day the discussion calls \"low confidence on timing\" is tagged low whatever its lead time"
+    as_of: "Twice daily, more during events"
+    fetch: api
+    agent: sky
+    verify_at_build: "verify path at build"
+  - id: nwac_forecast
+    name: "NWAC mountain weather forecast and station telemetry"
+    group: weather
+    url: "https://nwac.us"
+    region: ["WA Cascades", "WA Olympics", "Mt. Hood"]
+    provides: "Freezing level, snow level, ridge-top winds by zone; station temperature, wind, snow depth, 24 h snowfall"
+    enters_plan: "The winter authority on freezing level and ridge wind for the Cascades; in season it overrides Mountain-Forecast on those two fields. Telemetry is a direct observation of recent loading"
+    as_of: "Daily in season, roughly November through April; telemetry hourly, some stations year-round"
+    fetch: api
+    agent: sky
+  - id: mountain_forecast
+    name: "Mountain-Forecast"
+    group: weather
+    url: "https://www.mountain-forecast.com"
+    region: ["any named summit"]
+    provides: "Model forecast at fixed elevation bands: temperature, wind, freezing level, precipitation"
+    enters_plan: "Summit-elevation wind and freezing level when NWAC is off season or the peak is outside its zones. Pure model output; read beside the NWS discussion, never alone"
+    as_of: "Model cycle, every 6 h"
+    fetch: search
+    agent: sky
+  - id: spotwx
+    name: "SpotWx"
+    group: weather
+    url: "https://spotwx.com"
+    region: ["any point", "BC"]
+    provides: "Point extractions from several models (HRRR, NAM, GFS, GDPS, HRDPS) on one chart"
+    enters_plan: "Model spread at the exact camp or summit coordinate; spread is the confidence tag for a BC trip where no NWS discussion exists"
+    as_of: "Each model's own cycle"
+    fetch: search
+    agent: sky
+  - id: env_canada
+    name: "Environment Canada public forecast and Avalanche Canada mountain weather"
+    group: weather
+    url: "https://weather.gc.ca"
+    region: ["BC"]
+    provides: "Regional forecast; mountain-specific freezing level and alpine wind in season"
+    enters_plan: "The BC replacement for the NWS pair above"
+    as_of: "Twice daily"
+    fetch: search
+    agent: sky
+  - id: nws_alerts
+    name: "NWS watches, warnings, advisories"
+    group: weather
+    url: "https://api.weather.gov/alerts?point="
+    region: ["WA", "OR", "ID"]
+    provides: "Active winter storm, wind, heat, red flag, flood, and lightning products for the point"
+    enters_plan: "A hard-stop input: an active warning on the route's zone on the push day is a stop, an advisory is a weighed factor"
+    as_of: "Live"
+    fetch: api
+    agent: sky
+    hard_stop: ["nws_warning"]
+  - id: wsdot
+    name: "WSDOT Traveler API and mountain pass pages"
+    group: access
+    url: "https://wsdot.wa.gov/traffic/api/"
+    region: ["WA"]
+    provides: "Pass status, chain requirements, closures, alerts, cameras"
+    enters_plan: "Whether the highway leg is open on the dates. Seasonal passes gate whole regions: SR 20 (North Cascades), SR 410 (Chinook), SR 123 (Cayuse), SR 542 above the ski area (Artist Point)"
+    as_of: "Live; seasonal open and close dates announced per year"
+    fetch: api
+    agent: access
+    hard_stop: ["road_or_closure"]
+  - id: odot_tripcheck
+    name: "ODOT TripCheck API"
+    group: access
+    url: "https://tripcheck.com/Pages/API"
+    region: ["OR"]
+    provides: "Incidents, planned closures, road weather, cameras, in XML and JSON"
+    enters_plan: "Same role for Oregon. Seasonal: OR 242 (McKenzie Pass), Cascade Lakes Highway, Crater Lake Rim Drive (NPS, listed under its park)"
+    as_of: "Incidents every 2 minutes per the portal"
+    fetch: api
+    agent: access
+    hard_stop: ["road_or_closure"]
+  - id: idaho_511
+    name: "Idaho 511"
+    group: access
+    url: "https://511.idaho.gov"
+    region: ["ID"]
+    provides: "Closures, conditions, cameras"
+    enters_plan: "Same role for Idaho"
+    as_of: "Live"
+    fetch: search
+    agent: access
+    hard_stop: ["road_or_closure"]
+  - id: drivebc
+    name: "DriveBC"
+    group: access
+    url: "https://www.drivebc.ca"
+    region: ["BC"]
+    provides: "Events, closures, webcams"
+    enters_plan: "Same role for BC; the Sea-to-Sky and Duffey Lake Road are the ones that matter for ski trips"
+    as_of: "Live"
+    fetch: search
+    agent: access
+    hard_stop: ["road_or_closure"]
+  - id: usfs_forest_alerts
+    name: "USFS forest alerts and road-condition pages, one per forest"
+    group: access
+    url: "https://experience.arcgis.com/experience/3d9f1901932d4b089f01be06885f3e22/page/Welcome"
+    region: ["WA forests", "OR forests", "ID forests"]
+    provides: "Forest road washouts, gates, snow, closure orders with maps"
+    enters_plan: "The trailhead leg. Most PNW trailheads sit at the end of a forest road and the highway feed says nothing about it; a washout here is the bridge-out case the verdict must weigh. Closure orders are legal access, the same weight as a permit. Mt. Baker-Snoqualmie publishes its road and trail status as an [ArcGIS map](https://experience.arcgis.com/experience/3d9f1901932d4b089f01be06885f3e22/page/Welcome) with per-road notes and corridor tabs; it is the Access agent's read for that forest and the model for what the registry looks for in the other sixteen"
+    as_of: "Updated as events happen; often stale, so the reading carries its page date"
+    fetch: search
+    agent: access
+    hard_stop: ["road_or_closure"]
+    map_url: "https://experience.arcgis.com/experience/3d9f1901932d4b089f01be06885f3e22/page/Welcome"
+    map_center: "Verify at build whether the Experience accepts a center parameter; the corridor tab (Mt. Baker Hwy, Mountain Loop, US 2, I-90) can be named in the report instead"
+  - id: nps_conditions
+    name: "NPS current conditions and NPS alerts API"
+    group: access
+    url: "https://www.nps.gov/subjects/developer/api-documentation.htm"
+    region: ["Mount Rainier", "North Cascades", "Olympic", "Crater Lake"]
+    provides: "Road and gate status (Paradise gate, Sunrise, Cascade River Road, Hurricane Ridge Road, Rim Drive), timed-entry rules where piloted, trail closures"
+    enters_plan: "Park access and any reservation gate on entry. Rainier's timed-entry pilot ran 2024 and 2025; the registry re-verifies it each season"
+    as_of: "Live for alerts; conditions pages weekly"
+    fetch: api
+    agent: access
+    hard_stop: ["road_or_closure"]
+  - id: state_land_managers
+    name: "State land managers: WA State Parks and DNR, Oregon State Parks, Idaho Parks"
+    group: access
+    region: ["WA", "OR", "ID"]
+    provides: "Park closures, Discover Pass and Sno-Park rules, DNR road gates"
+    enters_plan: "Access to state trailheads (Mount Si, Tiger, Mt. Pilchuck road) and the Sno-Park season, November 1 through April 30 in both WA and OR"
+    as_of: "Seasonal"
+    fetch: search
+    agent: access
+    hard_stop: ["road_or_closure"]
+  - id: wa_ferries
+    name: "Washington State Ferries schedule and alerts"
+    group: access
+    url: "https://wsdot.wa.gov/travel/washington-state-ferries"
+    region: ["Olympic Peninsula", "islands"]
+    provides: "Sailings, cancellations"
+    enters_plan: "A time input to Clock for peninsula trips; a cancelled sailing moves the start by hours"
+    as_of: "Live"
+    fetch: search
+    agent: access
+    also_feeds: [clock]
+  - id: pass_rules
+    name: "Pass rules: Discover Pass, Northwest Forest Pass, America the Beautiful, WA and OR Sno-Park, Idaho Park N' Ski, BC Parks day-use pass"
+    group: access
+    region: ["by land manager"]
+    provides: "Which pass the trailhead needs"
+    enters_plan: "A to-do line in the report, never a verdict input. BC day-use passes at Garibaldi, Joffre Lakes, and Golden Ears are capacity-limited in summer and do gate access"
+    as_of: "Annual"
+    fetch: static
+    agent: access
+  - id: recreation_gov
+    name: "recreation.gov"
+    group: permits
+    url: "https://www.recreation.gov"
+    region: ["WA", "OR", "ID"]
+    provides: "Enchantments lottery and daily walk-ups; Mount Rainier wilderness and climbing permits; Mount St. Helens climbing quota, April 1 through October 31; Mount Adams Cascade Volcano Pass, June 1 through September 30 above 7,000 ft; [Mount Hood climbing permit](https://www.recreation.gov/activitypass/AP21894) above 9,500 ft, year-round, 3-day or annual; Olympic wilderness permits; North Cascades advance backcountry permits; Oregon's Central Cascades Wilderness Permit System for Mt. Jefferson, Mt. Washington, and Three Sisters, June 15 through October 15"
+    enters_plan: "Legal access. A required permit with no availability on the dates is a hard stop; a permit on sale but not yet bought is a caveat; a lottery already missed with a walk-up path is a Wait with the walk-up time named"
+    as_of: "Availability live; season windows set per year"
+    fetch: search
+    agent: access
+    hard_stop: ["permit_unavailable"]
+  - id: walkup_permits
+    name: "Walk-up and self-issue permits: North Cascades walk-up share, Sawtooth and most Idaho wilderness trailhead registers, Olympic NF self-issue"
+    group: permits
+    region: ["by unit"]
+    provides: "Whether a walk-up path exists and where"
+    enters_plan: "Converts a sold-out reservation into a Wait with a specific ranger station and opening time"
+    as_of: "Per unit"
+    fetch: search
+    agent: access
+    hard_stop: ["permit_unavailable"]
+  - id: bc_parks_permits
+    name: "BC Parks backcountry reservations and Parks Canada permits"
+    group: permits
+    url: "https://bcparks.ca"
+    region: ["BC"]
+    provides: "Garibaldi, Joffre Lakes, Mount Assiniboine, Glacier NP backcountry camping"
+    enters_plan: "Same role across the border"
+    as_of: "Live"
+    fetch: search
+    agent: access
+    hard_stop: ["permit_unavailable"]
+  - id: wta_reports
+    name: "WTA trip reports"
+    group: ground
+    url: "https://www.wta.org"
+    region: ["WA"]
+    provides: "Dated first-hand reports with road, snow, water, bug, and hazard notes; same-month reports from prior years"
+    enters_plan: "The primary read of what the route is like now. Recency is the quality axis: under a week is current, over a month is a prior; a same-month prior-year report is the fallback when nothing recent exists, flagged as such"
+    as_of: "Per report date"
+    fetch: search
+    agent: ground
+  - id: oregon_hikers
+    name: "Oregon Hikers field guide and forum trip reports"
+    group: ground
+    url: "https://www.oregonhikers.org"
+    region: ["OR"]
+    provides: "The Oregon equivalent, with a route guide per hike"
+    enters_plan: "Same role for Oregon"
+    as_of: "Per report date"
+    fetch: search
+    agent: ground
+  - id: alltrails
+    name: "AllTrails reviews"
+    group: ground
+    url: "https://www.alltrails.com"
+    region: ["PNW-wide", "ID"]
+    provides: "Dated reviews with conditions tags, trail stats, a weather overview"
+    enters_plan: "A recency backstop and the Idaho default; reviews are short and uneven, so a single review never carries a factor alone"
+    as_of: "Per review date"
+    fetch: connector
+    agent: ground
+  - id: peak_reports
+    name: "PeakBagger ascent logs, SummitPost, CascadeClimbers, Mountaineers trip reports"
+    group: ground
+    url: "https://www.peakbagger.com"
+    region: ["peaks", "scrambles"]
+    provides: "Dated ascents, often with route-finding and condition detail"
+    enters_plan: "The Ground read for summits WTA does not cover"
+    as_of: "Per report date"
+    fetch: search
+    agent: ground
+  - id: turns_all_year
+    name: "Turns All Year"
+    group: ground
+    url: "https://turns-all-year.com"
+    region: ["PNW ski touring"]
+    provides: "Dated ski trip reports with snow surface and coverage detail"
+    enters_plan: "The Ground and Snow read for a ski trip; the only community source that reports snow surface by aspect"
+    as_of: "Per report date"
+    fetch: search
+    agent: ground
+    also_feeds: [snow]
+  - id: nwac_observations
+    name: "NWAC observations and avalanche.org field observations"
+    group: ground
+    url: "https://nwac.us/observations"
+    region: ["WA", "OR", "ID"]
+    provides: "Public and professional field observations: recent avalanches, snowpack tests, surface"
+    enters_plan: "Recent activity for the Snow agent; a reported natural cycle on the route's aspect is weighed above the published rating"
+    as_of: "Per observation date"
+    fetch: search
+    agent: snow
+  - id: ranger_conditions
+    name: "NPS and USFS climbing and trail condition pages"
+    group: ground
+    region: ["parks", "forests"]
+    provides: "Ranger-written route state: crevasse openings, bridge outages, snow on trail, washouts"
+    enters_plan: "The authoritative read where it exists; a ranger note that a bridge is out is a fact, not a report"
+    as_of: "Weekly in season"
+    fetch: search
+    agent: ground
+    hard_stop: ["glacier_no_report"]
+  - id: guide_updates
+    name: "Guide-service route updates: RMI, Alpine Ascents, IMG, Timberline Mountain Guides, Pro Guiding, Northwest Alpine Guides, Mountain Madness"
+    group: ground
+    region: ["glaciated volcanoes"]
+    provides: "Current route choice, crevasse crossings, descent conditions"
+    enters_plan: "Glacier state in the weeks ranger pages lag; a guide switching routes is a flag on the standard route"
+    as_of: "Weekly in season"
+    fetch: search
+    agent: ground
+    hard_stop: ["glacier_no_report"]
+  - id: webcams
+    name: "Webcams: NPS Paradise and Sunrise, Timberline and Mt. Hood Meadows, Mt. Bachelor, WSDOT and ODOT pass cameras, NWAC cameras"
+    group: ground
+    region: ["fixed points"]
+    provides: "A live image"
+    enters_plan: "Direct truth of current snow cover and visibility at the trailhead elevation, used to age-check every report above"
+    as_of: "Live"
+    fetch: search
+    agent: ground
+    hard_stop: ["glacier_no_report"]
+  - id: satellite
+    name: "Satellite: NASA Worldview and Sentinel-2 via Copernicus Browser"
+    group: ground
+    url: "https://worldview.earthdata.nasa.gov"
+    region: ["any"]
+    provides: "Recent true-color imagery"
+    enters_plan: "Where the snow line sits when reports are stale; the only source that answers that question for an unreported route"
+    as_of: "Every 2 to 5 days"
+    fetch: search
+    agent: ground
+    hard_stop: ["glacier_no_report"]
+  - id: stream_notes
+    name: "Stream and water notes inside the reports above"
+    group: ground
+    region: ["route"]
+    provides: "Flow at crossings, which sources are running"
+    enters_plan: "The Ground agent's water and crossing reading, cross-checked against the gauge below"
+    as_of: "Per report date"
+    fetch: search
+    agent: ground
+  - id: avalanche_org
+    name: "avalanche.org public API"
+    group: snow
+    url: "https://avalanche.org"
+    region: ["WA", "OR", "ID"]
+    provides: "Danger by elevation band, problem types with aspect and elevation roses, likelihood and size, discussion, bottom line"
+    enters_plan: "The Snow agent's input, never its answer: the problem rose is laid over the route's aspects and the day's slope angles. The map layer is also the resolver's zone lookup"
+    as_of: "Daily in season; off season the product is a general statement and the reading says \"no rating\""
+    fetch: api
+    agent: snow
+    hard_stop: ["avalanche_high"]
+  - id: avalanche_canada
+    name: "Avalanche Canada API"
+    group: snow
+    url: "https://avalanche.ca/api-docs"
+    region: ["BC"]
+    provides: "Same shape as above for Sea-to-Sky, South Coast, South Columbia, Kootenay Boundary"
+    enters_plan: "Same role; areas GeoJSON is the resolver's zone lookup across the border"
+    as_of: "Daily in season"
+    fetch: api
+    agent: snow
+    hard_stop: ["avalanche_high"]
+  - id: unforecast_terrain
+    name: "Unforecast terrain"
+    group: snow
+    region: ["Southern Oregon Cascades", "central Idaho", "any zone off season"]
+    provides: "Nothing"
+    enters_plan: "A declared state. The Snow agent reasons from weather, telemetry, and observations with the flag \"no forecast available\" on its contribution, and confidence drops one step. Spring volcano season (April through June) lands here for every NWAC zone after the season closes, so this is the common case, not the edge"
+    as_of: "n/a"
+    fetch: static
+    agent: snow
+  - id: snotel
+    name: "SNOTEL via the NRCS AWDB REST service"
+    group: snow
+    url: "https://www.nrcs.usda.gov/wps/portal/wcc/home/"
+    region: ["WA", "OR", "ID"]
+    provides: "Snow depth, SWE, temperature, precipitation at fixed stations"
+    enters_plan: "Recent loading (24 h and 72 h SWE change) and the snow line, inferred from the nearest station at similar elevation; the resolver picks the station. The [NWCC interactive map](https://nwcc-apps.sc.egov.usda.gov/imap/#version=2&elements=&networks=!&states=!&counties=!&hucs=&minElevation=&maxElevation=&elementSelectType=any&activeOnly=true&activeForecastPointsOnly=true&hucLabels=false&hucIdLabels=false&hucParameterLabels=true&stationLabels=&overlays=&hucOverlays=&basinOpacity=75&basinNoDataOpacity=25&basemapOpacity=100&maskOpacity=0&mode=data&openSections=dataElement,parameter,date,basin,options,elements,location,networks&controlsOpen=true&popup=&popupMulti=&popupBasin=&base=esriNgwm&displayType=station&basinType=6&dataElement=WTEQ&depth=-8&parameter=OBS&frequency=DAILY&duration=I&customDuration=&dayPart=E&monthPart=E&forecastPubDay=1&forecastExceedance=50&useMixedPast=true&seqColor=1&divColor=7&scaleType=D&scaleMin=&scaleMax=&referencePeriodType=POR&referenceBegin=1991&referenceEnd=2020&minimumYears=20&hucAssociations=true&relativeDate=-1&lat=45.274&lon=-120.493&zoom=6.5) shows the same stations as SWE on terrain, which is how a person sees the regional pattern a single station cannot give"
+    as_of: "Hourly"
+    fetch: api
+    agent: snow
+    map_url: "https://nwcc-apps.sc.egov.usda.gov/imap/#version=2&elements=&networks=!&states=!&counties=!&hucs=&minElevation=&maxElevation=&elementSelectType=any&activeOnly=true&activeForecastPointsOnly=true&hucLabels=false&hucIdLabels=false&hucParameterLabels=true&stationLabels=&overlays=&hucOverlays=&basinOpacity=75&basinNoDataOpacity=25&basemapOpacity=100&maskOpacity=0&mode=data&openSections=dataElement,parameter,date,basin,options,elements,location,networks&controlsOpen=true&popup=&popupMulti=&popupBasin=&base=esriNgwm&displayType=station&basinType=6&dataElement=WTEQ&depth=-8&parameter=OBS&frequency=DAILY&duration=I&customDuration=&dayPart=E&monthPart=E&forecastPubDay=1&forecastExceedance=50&useMixedPast=true&seqColor=1&divColor=7&scaleType=D&scaleMin=&scaleMax=&referencePeriodType=POR&referenceBegin=1991&referenceEnd=2020&minimumYears=20&hucAssociations=true&relativeDate=-1&lat=45.274&lon=-120.493&zoom=6.5"
+    map_center: "`lat`, `lon`, and `zoom` in the fragment; the rest of the fragment is the curated state and stays as is"
+  - id: nohrsc
+    name: "NOHRSC snow analysis"
+    group: snow
+    url: "https://www.nohrsc.noaa.gov"
+    region: ["US"]
+    provides: "Modeled snow depth and SWE grids"
+    enters_plan: "The snow line where no station or report sits near the route; model output, read as approximate"
+    as_of: "Daily"
+    fetch: search
+    agent: snow
+  - id: ski_area_reports
+    name: "Ski area snow reports: Crystal, Mt. Baker, Stevens, Timberline, Mt. Hood Meadows, Mt. Bachelor"
+    group: snow
+    region: ["near the resorts"]
+    provides: "Base depth, 24 h and 72 h snowfall"
+    enters_plan: "A proxy for nearby backcountry loading when telemetry is sparse"
+    as_of: "Daily"
+    fetch: search
+    agent: snow
+  - id: caltopo_slope
+    name: "CalTopo slope-angle shading"
+    group: snow
+    url: "https://caltopo.com"
+    region: ["any"]
+    provides: "Slope angle by section, aspect"
+    enters_plan: "The Snow agent's terrain input, which the danger rating is read against; without it the rating is a region-wide number with no route meaning. Link format to verify at build"
+    as_of: "Static"
+    fetch: static
+    agent: snow
+    verify_at_build: "Link format to verify at build"
+  - id: watch_duty
+    name: "Watch Duty"
+    group: fire
+    url: "https://app.watchduty.org/"
+    region: ["Western US"]
+    provides: "Every incident from dispatch feeds onward, with perimeters, evacuation zones, radar, and a last-updated time per fire"
+    enters_plan: "The first read on fire, hours ahead of InciWeb on a new start; a growing fire near the route is weighed here, and the InciWeb closure polygon settles legal access"
+    as_of: "Minutes"
+    fetch: search
+    agent: access
+    hard_stop: ["fire_or_volcano"]
+    map_url: "https://app.watchduty.org/"
+    map_center: "Path form /@{lat},{lng},{zoom}, read from the app's client route table on 2026-10-20 (no query or hash form exists); the rendered recentering has not been eyeballed yet"
+    map_center_template: "https://app.watchduty.org/@{lat},{lon},{zoom}"
+  - id: inciweb
+    name: "InciWeb and NIFC open data"
+    group: fire
+    url: "https://inciweb.wildfire.gov"
+    region: ["US"]
+    provides: "Active incidents with perimeters, closure maps, evacuation levels"
+    enters_plan: "A closure polygon over the route is a hard stop; an active fire within a day's smoke drift is a weighed factor through the Sky agent"
+    as_of: "Daily per incident"
+    fetch: search
+    agent: access
+    hard_stop: ["road_or_closure", "fire_or_volcano"]
+  - id: nwcc_fire
+    name: "NWCC Northwest Interagency Coordination Center"
+    group: fire
+    url: "https://gacc.nifc.gov/nwcc/"
+    region: ["WA", "OR"]
+    provides: "Regional fire situation, new starts, preparedness level"
+    enters_plan: "Which fires are growing toward the route this week"
+    as_of: "Daily in season"
+    fetch: search
+    agent: access
+    hard_stop: ["fire_or_volcano"]
+  - id: bc_wildfire
+    name: "BC Wildfire Service"
+    group: fire
+    url: "https://wildfiresituation.nrs.gov.bc.ca"
+    region: ["BC"]
+    provides: "Fires, area restrictions"
+    enters_plan: "Same role across the border"
+    as_of: "Daily"
+    fetch: search
+    agent: access
+    hard_stop: ["fire_or_volcano"]
+  - id: state_fire_pages
+    name: "WA DNR, Oregon Dept. of Forestry, Idaho Dept. of Lands fire pages"
+    group: fire
+    region: ["state lands"]
+    provides: "Burn bans, industrial restrictions, state-land closures"
+    enters_plan: "Campfire and stove rules in the report; closures weighed as access"
+    as_of: "Seasonal"
+    fetch: search
+    agent: access
+  - id: airnow
+    name: "AirNow API and PurpleAir"
+    group: fire
+    url: "https://www.airnow.gov"
+    region: ["US"]
+    provides: "Current AQI; HRRR smoke forecast through fire.airnow.gov"
+    enters_plan: "Smoke on the push day: AQI over 150 at the trailhead is a caveat for a day hike and a stop for a multi-day effort at altitude, judged against the party"
+    as_of: "Hourly"
+    fetch: api
+    agent: sky
+  - id: smoke_blogs
+    name: "Washington Smoke Blog and Oregon Smoke Blog"
+    group: fire
+    url: "https://wasmoke.blogspot.com"
+    region: ["WA", "OR"]
+    provides: "Forecaster smoke narrative"
+    enters_plan: "The confidence read on the smoke forecast, same role as the NWS discussion for weather"
+    as_of: "Daily during events"
+    fetch: search
+    agent: sky
+  - id: usgs_water
+    name: "USGS Water Services; WA Ecology, Oregon WRD, and Water Survey of Canada gauges"
+    group: water
+    url: "https://waterservices.usgs.gov"
+    region: ["PNW"]
+    provides: "Discharge and stage, with the diurnal melt cycle visible"
+    enters_plan: "Crossing feasibility and timing: a rising afternoon curve says cross in the morning; gauge trend plus a trip report settles a crossing that neither settles alone. The resolver picks the gauge only when the route crosses its drainage"
+    as_of: "15-minute"
+    fetch: api
+    agent: ground
+  - id: noaa_tides
+    name: "NOAA CO-OPS tides"
+    group: water
+    url: "https://api.tidesandcurrents.noaa.gov"
+    region: ["Olympic coast", "Puget Sound"]
+    provides: "Predicted tide heights by station"
+    enters_plan: "Headland passability windows on the Olympic coast (Shi Shi to Ozette, the South Coast route), which fix the day's walking schedule outright"
+    as_of: "Predicted, any date"
+    fetch: api
+    agent: ground
+  - id: sun_moon
+    name: "Sunrise and sunset, computed for the date and coordinates"
+    group: water
+    region: ["any"]
+    provides: "Civil twilight, sunrise, sunset, moon phase"
+    enters_plan: "Clock's daylight budget and the alpine-start window"
+    as_of: "Computed"
+    fetch: computed
+    agent: clock
+  - id: contingency_ref
+    name: "Carrier coverage maps, Garmin inReach, county sheriff SAR contacts, NPS dispatch numbers"
+    group: water
+    region: ["by county and park"]
+    provides: "Where coverage exists, who answers"
+    enters_plan: "The Contingency agent's reference table; judgment, not a feed"
+    as_of: "Static"
+    fetch: static
+    agent: contingency
+  - id: usgs_cvo
+    name: "USGS Cascades Volcano Observatory alert levels"
+    group: water
+    url: "https://www.usgs.gov/observatories/cvo"
+    region: ["WA", "OR"]
+    provides: "Volcano alert level and aviation color code"
+    enters_plan: "A level above Normal on the trip's volcano is a hard stop"
+    as_of: "Live"
+    fetch: search
+    agent: access
+    hard_stop: ["fire_or_volcano"]
+maps:
+  - id: nwcc_snotel
+    source: snotel
+    shows: "Every SNOTEL station as yesterday's snow water equivalent on terrain, with the element, parameter, and reference-period controls preset"
+    include_when: "Snow factor applies"
+    center: "`lat`, `lon`, and `zoom` in the fragment; the rest of the fragment is the curated state and stays as is"
+  - id: watch_duty_map
+    source: watch_duty
+    shows: "Active fires, perimeters, evacuation zones, and radar for the western US"
+    include_when: "Fire season, or any active incident within a day's smoke drift"
+    center: "Verify at build whether the app accepts a center parameter; otherwise the link is handed as is with the incident name to search"
+  - id: mbs_road_trail
+    source: usfs_forest_alerts
+    shows: "Every forest road and trail in the MBS colored by status, with a note per road and a tab per corridor"
+    include_when: "Any day whose bundle resolves to the MBS"
+    center: "Verify at build whether the Experience accepts a center parameter; the corridor tab (Mt. Baker Hwy, Mountain Loop, US 2, I-90) can be named in the report instead"

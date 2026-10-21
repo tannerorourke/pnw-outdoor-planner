@@ -1,0 +1,8 @@
+{
+  "trip": {"name": "Mt. Rainier via Disappointment Cleaver", "start": "2026-06-20", "end": "2026-06-22", "activity": "mountaineering", "glaciated": true, "snow": true, "coastal": false},
+  "days": [
+    {"date": "2026-06-20", "trailhead": {"name": "Paradise", "lat": 46.786, "lon": -121.735, "elev_ft": 5400}, "camp": {"name": "Camp Muir", "lat": 46.836, "lon": -121.732, "elev_ft": 10080}, "route_elev_band": [5400, 10080]},
+    {"date": "2026-06-21", "trailhead": {"name": "Paradise", "lat": 46.786, "lon": -121.735, "elev_ft": 5400}, "camp": {"name": "Camp Muir", "lat": 46.836, "lon": -121.732, "elev_ft": 10080}, "high_point": {"name": "Columbia Crest", "lat": 46.853, "lon": -121.760, "elev_ft": 14411}, "route_elev_band": [10080, 14411]},
+    {"date": "2026-06-22", "trailhead": {"name": "Paradise", "lat": 46.786, "lon": -121.735, "elev_ft": 5400}, "camp": {"name": "Camp Muir", "lat": 46.836, "lon": -121.732, "elev_ft": 10080}, "route_elev_band": [5400, 10080]}
+  ]
+}
