@@ -180,6 +180,17 @@ sources:
     fetch: search
     agent: access
     hard_stop: ["road_or_closure"]
+  - id: local_news_roads
+    name: "Regional news on road reopenings and closures: Cascadia Daily News for Whatcom County, and a search for '<road name> reopen' limited to the last 90 days elsewhere"
+    group: access
+    url: "https://www.cascadiadaily.com"
+    region: ["WA", "OR", "ID"]
+    provides: "Dated articles on forest-road and highway washouts, repairs, and reopenings"
+    enters_plan: "A road-status reading with the article date as its as-of; it fills the gap when a forest's road page is stale, and a newer agency page supersedes it"
+    as_of: "Per article date"
+    fetch: search
+    agent: access
+    hard_stop: ["road_or_closure"]
   - id: wa_ferries
     name: "Washington State Ferries schedule and alerts"
     group: access
@@ -327,6 +338,7 @@ sources:
     name: "Satellite: NASA Worldview and Sentinel-2 via Copernicus Browser"
     group: ground
     url: "https://worldview.earthdata.nasa.gov"
+    url_template: "https://worldview.earthdata.nasa.gov/?v={lon-0.3},{lat-0.2},{lon+0.3},{lat+0.2}&t={YYYY-MM-DD}"
     region: ["any"]
     provides: "Recent true-color imagery"
     enters_plan: "Where the snow line sits when reports are stale; the only source that answers that question for an unreported route"
@@ -411,11 +423,21 @@ sources:
     url: "https://caltopo.com"
     region: ["any"]
     provides: "Slope angle by section, aspect"
-    enters_plan: "The Snow agent's terrain input, which the danger rating is read against; without it the rating is a region-wide number with no route meaning. Link format to verify at build"
+    enters_plan: "The Snow agent's terrain input, which the danger rating is read against; without it the rating is a region-wide number with no route meaning. Link format to verify at build. When the shading cannot be read programmatically, `usgs_3dep_slope` samples slope and aspect along the route instead"
     as_of: "Static"
     fetch: static
     agent: snow
     verify_at_build: "Link format to verify at build"
+  - id: usgs_3dep_slope
+    name: "USGS 3DEP Elevation Point Query Service"
+    group: snow
+    url: "https://epqs.nationalmap.gov/v1/json?x={lon}&y={lat}&units=Feet"
+    region: ["US"]
+    provides: "Ground elevation at a single coordinate from the 3DEP DEM"
+    enters_plan: "Slope angle and aspect along the route, sampled from elevations at points 100 to 150 m apart, when `caltopo_slope` cannot be read programmatically; each section's angle and aspect is a sampled reading, coarser than shading"
+    as_of: "Static"
+    fetch: api
+    agent: snow
   - id: watch_duty
     name: "Watch Duty"
     group: fire

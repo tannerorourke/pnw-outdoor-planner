@@ -15,6 +15,7 @@ import re
 import subprocess
 import sys
 from datetime import date
+from math import asin, cos, radians, sin, sqrt
 from pathlib import Path
 
 import yaml
@@ -39,6 +40,7 @@ SWITCHES = {
     "central_cascades_permits": ("06-15", "10-15"),
     "fire_season": ("06-01", "10-31"),
 }
+WEBCAM_KM, WEBCAM_N = 60, 3
 
 
 def jurisdiction(lat, lon):
@@ -123,6 +125,24 @@ def contains(u, pt):
     return w <= pt["lon"] <= e and s <= pt["lat"] <= n
 
 
+def km(a, b):
+    h = sin(radians(b["lat"] - a["lat"]) / 2) ** 2 + \
+        cos(radians(a["lat"])) * cos(radians(b["lat"])) * sin(radians(b["lon"] - a["lon"]) / 2) ** 2
+    return 12742 * asin(sqrt(h))
+
+
+def nearest_webcams(units, hits, th):
+    # -- placed cams rank by distance across the whole registry, since a forest-sized unit holds cams
+    #    150 km apart; an unplaced cam rides on its unit containing the day
+    placed = {}
+    for w in (w for u in units for w in u.get("webcams") or [] if "lat" in w):
+        placed.setdefault(w["url"], w)
+    ranked = sorted((km(th, w), url, w) for url, w in placed.items())
+    cams = [{**w, "km": round(d, 1)} for d, _, w in ranked if d <= WEBCAM_KM][:WEBCAM_N]
+    unplaced = [w for u in hits for w in u.get("webcams") or [] if "lat" not in w]
+    return cams, unplaced
+
+
 def unit_entry(u, d: date, today: str, lapsed: list):
     def live(w):
         return bool(w) and in_window(d, str(w["start"]), str(w["end"]))
@@ -177,7 +197,10 @@ def resolve_day(day, trip, units, sources, today):
     if trip.get("coastal"):
         t = tides_nearest(th["lat"], th["lon"])
         inst["tides"] = t.get("stations", t)
-    inst["webcams"] = [w for u in hits for w in u.get("webcams") or []]
+    cams, unplaced = nearest_webcams(units, hits, th)
+    inst["webcams"] = cams + unplaced
+    if not cams:
+        inst["webcams_note"] = f"no registry webcam within {WEBCAM_KM} km of the trailhead; search for one near the route or lean on satellite"
 
     tz = nws.get("timezone") or TZ[primary]
     bundle = {

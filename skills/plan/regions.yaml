@@ -1,5 +1,6 @@
 # Land-unit registry for pnw-outdoor-planner. Merged 2026-10-20 from the WA/NPS and OR/ID/BC halves.
 # A point may sit in several boxes (a wilderness inside its forest, a statewide program over everything); the resolver lists the smallest first.
+# A webcam with 'lat' and 'lon' is picked by distance from a day's trailhead whatever unit holds it; one without is listed only when its unit contains a day's point.
 # Every 'verify_by' is a date before which that season or permit entry must be re-checked; the resolver warns past it and never refuses.
 # Page URLs were checked with HEAD on 2026-10-20; recreation.gov answers HEAD with 405 and GET with 200, so those were checked by GET.
 verified:
@@ -126,6 +127,8 @@ units:
     url: https://www.nps.gov/subjects/air/webcams.htm?site=noca
   - name: WSDOT North Cascades Highway
     url: https://wsdot.com/travel/real-time/mountainpasses/north-cascades-highway
+    lat: 48.525
+    lon: -120.654
   notes: SR 20 gates the whole north side and is the Access agent's first read. Stehekin has no road access; it is reached by ferry, floatplane, or hiking, and the Stehekin valley is a separate logistics case.
 - id: olym_np
   name: Olympic National Park
@@ -258,8 +261,20 @@ units:
   webcams:
   - name: WSDOT Stevens Pass
     url: https://wsdot.com/travel/real-time/mountainpasses/stevens
+    lat: 47.745
+    lon: -121.089
   - name: WSDOT Snoqualmie Pass
     url: https://wsdot.com/travel/real-time/mountainpasses/snoqualmie
+    lat: 47.424
+    lon: -121.413
+  - name: WSDOT Mt. Baker Highway SR 542
+    url: https://wsdot.com/travel/real-time/mountainpasses/mt.-baker
+    lat: 48.86
+    lon: -121.68
+  - name: Mt. Baker Ski Area webcams
+    url: https://www.mtbaker.us/snow-report/
+    lat: 48.86
+    lon: -121.68
   notes: 'The only WA forest with a published road and trail status map: one Experience with a forest-wide Welcome page map and corridor pages for Mt. Baker Hwy, Baker Lake Rd, North Cascades Hwy, Suiattle River Rd, Mountain Loop Hwy, US 2, I-90, Mather Memorial Pkwy, and Carbon River Hwy. Roads are often stale; carry the page date.'
 - id: okawen_nf
   name: Okanogan-Wenatchee National Forest
@@ -301,6 +316,8 @@ units:
   webcams:
   - name: WSDOT Blewett and Stevens passes
     url: https://wsdot.com/travel/real-time/mountainpasses/stevens
+    lat: 47.745
+    lon: -121.089
   notes: No forest-published road and trail status map. The closures page points to the Region 6 emergency closures Experience (all PNW forests, not forest-specific); the forest's own conditions page lists road status text and is often dated. Alpine Lakes and Glacier Peak wilderness permits are handled in their own units.
 - id: gpnf
   name: Gifford Pinchot National Forest
@@ -339,6 +356,8 @@ units:
   webcams:
   - name: WSDOT White Pass
     url: https://wsdot.com/travel/real-time/mountainpasses/white
+    lat: 46.637
+    lon: -121.391
   notes: 'No forest-published road status map found: the forest''s Interactive Maps page only links the national visitor map. Use alerts plus the Motor Vehicle Use Map for road legality. Forest order list is the closure authority.'
 - id: onf
   name: Olympic National Forest

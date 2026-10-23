@@ -1,7 +1,6 @@
 ---
 name: plan
-description: Plan an outdoor trip in Washington, Oregon, Idaho, or the BC fringe end to end, from intake to a sourced go/no-go verdict, by resolving each day's location to its governing sources and running the pnw-outdoor-planner workflow. Use only when the user types /pnw-outdoor-planner:plan; a single weather or avalanche question goes to weather-report or avalanche-report directly.
-disable-model-invocation: true
+description: Plan an outdoor trip in Washington, Oregon, Idaho, or the BC fringe end to end, from intake to a sourced go/no-go verdict, by resolving each day's location to its governing sources and running the pnw-outdoor-planner workflow. Use when the user asks to plan or research a trip in that region, or to run the planner on one. A single weather or avalanche question does not trigger it; that goes to weather-report or avalanche-report.
 argument-hint: "[trip in a sentence, or a path to an itinerary JSON]"
 ---
 
@@ -24,9 +23,9 @@ Three files in this folder are the contract every agent reads: `sources.yaml` (e
 Collect, asking only for what is missing:
 
 - Trip: name, activity (`hike`, `backpack`, `scramble`, `mountaineering`, `ski`), start and end dates, `glaciated` (true for any glacier travel), `snow` (true when the route holds snow on the dates; spring volcano season is snow), `coastal` (true for the Olympic coast), and an optional `party` string that replaces the default calibration (an experienced mountaineer and skier with glacier travel and scrambling experience).
-- Per day: date, trailhead (name, lat, lon, elev_ft), camp and high point when they exist, `route_elev_band` as `[low_ft, high_ft]`, and `crossings` (name, lat, lon) for any stream the route fords. Route stats the Clock agent needs: distance and gain per day, in the day's `name` or a `stats` field.
+- Per day: date, trailhead (name, lat, lon, elev_ft), camp and high point when they exist, `route_elev_band` as `[low_ft, high_ft]`, and `crossings` (name, lat, lon) for any stream the route fords. Route stats the Clock agent needs: distance and gain per day in a `stats` field, with the source they came from; the day's `name` is descriptive only.
 
-Coordinates come from the route's own guide page, PeakBagger, or CalTopo; state the source in the itinerary so the agents can check it. Write the itinerary to `~/.cache/pnw-outdoor-planner/<trip-slug>.json`. The shape is `scripts/example-itinerary.json` (3-day Rainier) and `scripts/example-itinerary-oregon.json` (1-day South Sister).
+Coordinates come from the route's own guide page, PeakBagger, or CalTopo; state the source in the itinerary so the agents can check it. Keep route lore you have not verified (a road closure, a bridge out, beta recalled from memory) out of `notes`, or prefix it with `unverified:`; the agents treat `notes` and each day's `name` as hints to check, never as readings. Write the itinerary to `~/.cache/pnw-outdoor-planner/<trip-slug>.json`. The shape is `scripts/example-itinerary.json` (3-day Rainier) and `scripts/example-itinerary-oregon.json` (1-day South Sister).
 
 Pass: the file parses and every day has `date` and `trailhead.lat`, `trailhead.lon`.
 
